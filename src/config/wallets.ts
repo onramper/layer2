@@ -11,7 +11,7 @@ export interface Wallet {
 }
 
 export const initializeWallets = (
-  chainID: number
+  chainIDs: number[]
   //nodeURL?: string
 ): Wallet[] => {
   return [
@@ -19,7 +19,7 @@ export const initializeWallets = (
       id: 0,
       name: 'metamask',
       connector: new InjectedConnector({
-        supportedChainIds: [chainID],
+        supportedChainIds: chainIDs,
       }),
       // cleanUp: null,
     },

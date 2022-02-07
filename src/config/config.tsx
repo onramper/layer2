@@ -14,9 +14,11 @@ export const ROUTER_API =
 export const TOKEN_LIST = 'https://tokens.uniswap.org/';
 
 export const DEFAULTS = {
-  slippageTolerance: 5,
-  deadline: 200,
+  slippageTolerance: 5, // 5%
+  deadline: 200, // 200 seconds
 };
+
+export const SUPPORTED_CHAINS = [1, 4];
 
 export interface SwapParams {
   data: string; // route.methodParameters.calldata,
@@ -27,7 +29,6 @@ export interface SwapParams {
 // Interfaces
 interface ProviderProps {
   children?: ReactNode;
-  layer2Args: Layer2Args;
 }
 
 // use this interface for type assertion inside addERC20ToMetamask()
@@ -68,14 +69,9 @@ export interface QuoteResult {
 
 export interface RouteResult extends QuoteResult {
   methodParameters: {
-    calldata: string; // long-ass hexString
+    calldata: string; // long hexString
     value: string; // 0x00
   };
-}
-
-interface Layer2Args {
-  chainID: number;
-  readOnlyNodeURL?: string;
 }
 
 const chainIdToNetwork: { [key: number]: Chain } = {
@@ -99,20 +95,17 @@ const chainIDToNetworkInfo: { [key: number]: Info } = {
 };
 
 export class Layer2 {
-  public CHAIN_ID: number;
-  public NODE_URL: string | null;
+  public CHAIN_IDS: number[];
   public wallets: Wallet[];
-  public chainIdToNetworkInfo: Info;
   public config: Config;
-  public chainInfo: Chain;
   public interfaces: { [key: string]: Interface };
   public contracts: { [key: string]: Contract };
+  public defaults: { [key: string]: number };
 
-  constructor({ chainID, readOnlyNodeURL }: Layer2Args) {
-    this.CHAIN_ID = chainID;
-    this.NODE_URL = readOnlyNodeURL ?? null;
-    this.wallets = initializeWallets(chainID);
-    this.chainInfo = chainIdToNetwork[chainID];
+  constructor() {
+    this.CHAIN_IDS = SUPPORTED_CHAINS; //! hard-coded for now
+    this.wallets = initializeWallets(SUPPORTED_CHAINS);
+    this.defaults = DEFAULTS;
 
     this.config = {
       autoConnect: false,
@@ -120,15 +113,8 @@ export class Layer2 {
         expirationPeriod: 30000,
         checkInterval: 2000,
       },
-      readOnlyChainId: this.CHAIN_ID,
-      readOnlyUrls: this.NODE_URL
-        ? {
-            [this.CHAIN_ID]: this.NODE_URL,
-          }
-        : {},
+      readOnlyChainId: undefined,
     };
-
-    this.chainIdToNetworkInfo = chainIDToNetworkInfo[chainID];
 
     this.interfaces = {
       erc20Interface: this.loadInterface(ERC20),
@@ -144,8 +130,9 @@ export class Layer2 {
   }
 
   public async getQuote(
+    chainID: number,
     inputAmount: number, // not formatted
-    tokenOut: string,
+    tokenOut: string, // address
     exactOut: boolean = false
   ): Promise<QuoteResult | unknown> {
     const tradeType = exactOut ? 'exactOut' : 'exactIn';
@@ -153,7 +140,7 @@ export class Layer2 {
 
     try {
       const res = await fetch(
-        `${ROUTER_API}/quote?tokenInAddress=${this.chainIdToNetworkInfo.symbol}&tokenInChainId=${this.CHAIN_ID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${this.CHAIN_ID}&amount=${formattedAmount}&type=${tradeType}`
+        `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}`
       );
       return res.json();
     } catch (error) {
@@ -162,6 +149,7 @@ export class Layer2 {
   }
 
   public async getRoute(
+    chainID: number,
     inputAmount: number,
     tokenOut: string,
     recipient: string,
@@ -172,7 +160,7 @@ export class Layer2 {
     const { slippageTolerance, deadline } = DEFAULTS;
     try {
       const res = await fetch(
-        `${ROUTER_API}/quote?tokenInAddress=${this.chainIdToNetworkInfo.symbol}&tokenInChainId=${this.CHAIN_ID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${this.CHAIN_ID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
+        `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
       );
       return res.json();
     } catch (error) {
@@ -181,6 +169,7 @@ export class Layer2 {
   }
 
   public async getSwapParams(
+    chainID: number,
     inputAmount: number,
     tokenOut: string,
     recipient: string,
@@ -188,6 +177,7 @@ export class Layer2 {
   ): Promise<SwapParams | unknown> {
     try {
       const res = await this.getRoute(
+        chainID,
         inputAmount,
         tokenOut,
         recipient,
@@ -215,21 +205,22 @@ export class Layer2 {
     }
   }
 
-  printVars(): void {
-    console.table({
-      chainID: this.CHAIN_ID,
-      node_URL: this.NODE_URL,
-    });
-  }
-
   // return user's address page on Etherscan
-  blockExplorerAddressLink(address: string): string | undefined {
-    return this.chainInfo.getExplorerAddressLink(address);
+  blockExplorerAddressLink(
+    chainID: number,
+    address: string
+  ): string | undefined {
+    return chainIdToNetwork[chainID].getExplorerAddressLink(address);
   }
 
   // return user's transaction info page on Etherscan
-  blockExplorerTransactionLink(transactionHash: string): string | undefined {
-    return this.chainInfo.getExplorerTransactionLink(transactionHash);
+  blockExplorerTransactionLink(
+    chainID: number,
+    transactionHash: string
+  ): string | undefined {
+    return chainIdToNetwork[chainID].getExplorerTransactionLink(
+      transactionHash
+    );
   }
 
   // pass in [JSON].abi
@@ -249,11 +240,6 @@ export class Layer2 {
 
     return contract;
   }
-}
-
-interface ConfigArgs {
-  chainID: number;
-  readOnlyNodeURL?: string;
 }
 
 export const addTokenToMetamask = async (
@@ -280,19 +266,13 @@ export const addTokenToMetamask = async (
   }
 };
 
-export const getConfig = ({ chainID, readOnlyNodeURL }: ConfigArgs): Config => {
+export const getConfig = (): Config => {
   return {
     autoConnect: false,
     notifications: {
       expirationPeriod: 30000,
       checkInterval: 2000,
     },
-    readOnlyChainId: chainID,
-    readOnlyUrls: readOnlyNodeURL
-      ? {
-          [chainID]: readOnlyNodeURL,
-        }
-      : {},
   };
 };
 
@@ -309,9 +289,9 @@ export interface ContextProps {
 
 export const L2Context = createContext({} as ContextProps);
 
-export const L2Provider = ({ children, layer2Args }: ProviderProps) => {
-  const layer2 = new Layer2(layer2Args);
-  const config = getConfig(layer2Args);
+export const L2Provider = ({ children }: ProviderProps) => {
+  const layer2 = new Layer2();
+  const config = getConfig();
   const wallets = layer2.wallets;
 
   const value = {
