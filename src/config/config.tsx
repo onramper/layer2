@@ -95,7 +95,6 @@ const chainIDToNetworkInfo: { [key: number]: Info } = {
 };
 
 export class Layer2 {
-  public CHAIN_IDS: number[];
   public wallets: Wallet[];
   public config: Config;
   public interfaces: { [key: string]: Interface };
@@ -103,7 +102,6 @@ export class Layer2 {
   public defaults: { [key: string]: number };
 
   constructor() {
-    this.CHAIN_IDS = SUPPORTED_CHAINS; //! hard-coded for now
     this.wallets = initializeWallets(SUPPORTED_CHAINS);
     this.defaults = DEFAULTS;
 
