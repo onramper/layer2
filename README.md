@@ -6,7 +6,7 @@ This package serves as a stand-alone lib that can be published t npm and importe
 
 Import layer2 into package using `npm link`.
 
-inside `widget/layer2`:
+inside `layer2`:
 
 ```bash
 npm install
