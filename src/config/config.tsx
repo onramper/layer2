@@ -14,7 +14,7 @@ export const ROUTER_API =
 export const TOKEN_LIST = 'https://tokens.uniswap.org/';
 
 export const DEFAULTS = {
-  slippageTolerance: 5, // 5%
+  slippageTolerance: 1, // 1%
   deadline: 200, // 200 seconds
 };
 
