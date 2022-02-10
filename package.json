@@ -32,7 +32,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "@onramper/layer2",
+  "name": "onramper-layer2",
   "author": "Gerhard_Steenkamp",
   "repository": { 
     "type": "git", 
