@@ -1,8 +1,7 @@
-import { Config, DAppProvider, Mainnet, Chain, Rinkeby } from '@usedapp/core';
+import { Config,  Mainnet, Chain, Rinkeby } from '@usedapp/core';
 import { Interface, Fragment, JsonFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
 import { ERC20, SwapRouter } from '../abis';
-import React, { createContext, ReactNode, useContext } from 'react';
 import { Wallet, initializeWallets } from './wallets';
 import { BigNumber } from 'ethers';
 import { parseEther } from '@ethersproject/units';
@@ -27,9 +26,7 @@ export interface SwapParams {
   gasPrice: BigNumber;
 }
 // Interfaces
-interface ProviderProps {
-  children?: ReactNode;
-}
+
 
 // use this interface for type assertion inside addERC20ToMetamask()
 interface WatchAssetParams {
@@ -274,37 +271,3 @@ export const getConfig = (): Config => {
   };
 };
 
-export interface ContextProps {
-  layer2: Layer2;
-  addTokenToMetamask: (
-    library: any,
-    address: string,
-    decimals: number
-  ) => Promise<boolean>;
-  config: Config;
-  wallets: Wallet[];
-}
-
-export const L2Context = createContext({} as ContextProps);
-
-export const L2Provider = ({ children }: ProviderProps) => {
-  const layer2 = new Layer2();
-  const config = getConfig();
-  const wallets = layer2.wallets;
-
-  const value = {
-    layer2,
-    addTokenToMetamask,
-    config,
-    wallets,
-  };
-  return (
-    <L2Context.Provider value={value}>
-      <DAppProvider config={config}>{children}</DAppProvider>
-    </L2Context.Provider>
-  );
-};
-
-export const useLayer2 = () => {
-  return useContext(L2Context);
-};
