@@ -32,8 +32,12 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "layer2",
+  "name": "@onramper/layer2",
   "author": "Gerhard_Steenkamp",
+  "repository": { 
+    "type": "git", 
+    "url": "https://github.com/onramper/layer2" 
+ },
   "module": "dist/layer2.esm.js",
   "size-limit": [
     {
