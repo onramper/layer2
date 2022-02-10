@@ -34,10 +34,10 @@
   },
   "name": "onramper-layer2",
   "author": "Gerhard_Steenkamp",
-  "repository": { 
-    "type": "git", 
-    "url": "https://github.com/onramper/layer2" 
- },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/onramper/layer2"
+  },
   "module": "dist/layer2.esm.js",
   "size-limit": [
     {
@@ -66,10 +66,12 @@
   "dependencies": {
     "@ethersproject/units": "^5.5.0",
     "@types/node": "^17.0.13",
-    "@usedapp/core": "^0.10.0",
     "@web3-react/injected-connector": "^6.0.7",
     "events": "^3.3.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
+  },
+  "peerDependencies": {
+    "@usedapp/core": "^0.11.0"
   }
 }
