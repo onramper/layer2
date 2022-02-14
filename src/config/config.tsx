@@ -1,7 +1,7 @@
 import { Config, DAppProvider, Mainnet, Chain, Rinkeby } from '@usedapp/core';
 import { Interface, Fragment, JsonFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
-import { ERC20, SwapRouter } from '../abis';
+import { ERC20 } from '../abis';
 import React, { createContext, ReactNode, useContext } from 'react';
 import { Wallet, initializeWallets } from './wallets';
 import { BigNumber } from 'ethers';
@@ -98,7 +98,6 @@ export class Layer2 {
   public wallets: Wallet[];
   public config: Config;
   public interfaces: { [key: string]: Interface };
-  public contracts: { [key: string]: Contract };
   public defaults: { [key: string]: number };
 
   constructor() {
@@ -116,14 +115,6 @@ export class Layer2 {
 
     this.interfaces = {
       erc20Interface: this.loadInterface(ERC20),
-      swapRouterInterface: this.loadInterface(SwapRouter.abi),
-    };
-
-    this.contracts = {
-      swapRouterContract: this.loadContract(
-        SwapRouter.abi,
-        SWAP_ROUTER_ADDRESS
-      ),
     };
   }
 
