@@ -42,11 +42,11 @@
   "size-limit": [
     {
       "path": "dist/layer2.cjs.production.min.js",
-      "limit": "10 KB"
+      "limit": "400 KB"
     },
     {
       "path": "dist/layer2.esm.js",
-      "limit": "10 KB"
+      "limit": "300 KB"
     }
   ],
   "devDependencies": {
