@@ -2,10 +2,19 @@ import { Config, DAppProvider, Mainnet, Chain, Rinkeby } from '@usedapp/core';
 import { Interface, Fragment, JsonFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
 import { ERC20 } from '../abis';
-import React, { createContext, ReactNode, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import { Wallet, initializeWallets } from './wallets';
 import { BigNumber } from 'ethers';
 import { parseEther } from '@ethersproject/units';
+import {
+  Info,
+  SwapParamsResult,
+  ProviderProps,
+  WatchAssetParams,
+  RouteResult,
+  QuoteResult,
+  Result,
+} from './models';
 
 // No need change the address, same is for all testnets and mainnet
 export const SWAP_ROUTER_ADDRESS = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
@@ -19,60 +28,6 @@ export const DEFAULTS = {
 };
 
 export const SUPPORTED_CHAINS = [1, 4];
-
-export interface SwapParams {
-  data: string; // route.methodParameters.calldata,
-  to: string; //  V3_SWAP_ROUTER_ADDRESS,
-  value: BigNumber; // BigNumber.from(route.methodParameters.value),
-  gasPrice: BigNumber;
-}
-// Interfaces
-interface ProviderProps {
-  children?: ReactNode;
-}
-
-// use this interface for type assertion inside addERC20ToMetamask()
-interface WatchAssetParams {
-  type: string; // In the future, other standards will be supported
-  options: {
-    address: string; // The address of the token contract
-    symbol: string; // A ticker symbol or shorthand, up to 5 characters
-    decimals: number; // The number of token decimals
-    image: string; // A string url of the token logo
-  };
-}
-
-export interface Info {
-  name: string;
-  symbol: string;
-  decimals: number;
-  wethAddress: string;
-}
-
-export interface QuoteResult {
-  blockNumber: string;
-  amount: string;
-  amountDecimals: string;
-  quote: string;
-  quoteDecimals: string;
-  quoteGasAdjusted: string;
-  quoteGasAdjustedDecimals: string;
-  gasUseEstimateQuote: string;
-  gasUseEstimateQuoteDecimals: string;
-  gasUseEstimate: string;
-  gasUseEstimateUSD: string;
-  gasPriceWei: string;
-  route: any[][];
-  routeString: string;
-  quoteId: string;
-}
-
-export interface RouteResult extends QuoteResult {
-  methodParameters: {
-    calldata: string; // long hexString
-    value: string; // 0x00
-  };
-}
 
 const chainIdToNetwork: { [key: number]: Chain } = {
   1: Mainnet,
@@ -123,7 +78,7 @@ export class Layer2 {
     inputAmount: number, // not formatted
     tokenOut: string, // address
     exactOut: boolean = false
-  ): Promise<QuoteResult | unknown> {
+  ): Promise<QuoteResult> {
     const tradeType = exactOut ? 'exactOut' : 'exactIn';
     const formattedAmount = parseEther(inputAmount.toString()).toString();
 
@@ -131,9 +86,14 @@ export class Layer2 {
       const res = await fetch(
         `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}`
       );
-      return res.json();
+      if (res.status === 200) {
+        const formattedResponse = await res.json();
+        return Result.ok(formattedResponse);
+      } else {
+        return Result.fail('unable to get quote');
+      }
     } catch (error) {
-      return error;
+      return Result.fail('unable to get quote');
     }
   }
 
@@ -143,7 +103,7 @@ export class Layer2 {
     tokenOut: string,
     recipient: string,
     exactOut: boolean = false
-  ): Promise<RouteResult | unknown> {
+  ): Promise<RouteResult> {
     const tradeType = exactOut ? 'exactOut' : 'exactIn';
     const formattedAmount = parseEther(inputAmount.toString()).toString();
     const { slippageTolerance, deadline } = DEFAULTS;
@@ -151,9 +111,18 @@ export class Layer2 {
       const res = await fetch(
         `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
       );
-      return res.json();
+      if (res.status === 200) {
+        const formattedResponse = await res.json();
+        return Result.ok(formattedResponse);
+      } else {
+        return Result.fail('unable to get route');
+      }
     } catch (error) {
-      return error;
+      if (error instanceof Error) {
+        return Result.fail(error.message);
+      } else {
+        return Result.fail('unable to get route');
+      }
     }
   }
 
@@ -163,7 +132,7 @@ export class Layer2 {
     tokenOut: string,
     recipient: string,
     exactOut: boolean = false
-  ): Promise<SwapParams | unknown> {
+  ): Promise<SwapParamsResult> {
     try {
       const res = await this.getRoute(
         chainID,
@@ -172,16 +141,23 @@ export class Layer2 {
         recipient,
         exactOut
       );
-      const routeResult = res as RouteResult;
-      const { calldata, value } = routeResult.methodParameters;
-      return {
-        data: calldata,
-        to: SWAP_ROUTER_ADDRESS,
-        value: BigNumber.from(value),
-        gasPrice: BigNumber.from(routeResult.gasPriceWei),
-      } as SwapParams;
+      if (res.isSuccess && res.value) {
+        const { calldata, value } = res.value.methodParameters;
+        return Result.ok({
+          data: calldata,
+          to: SWAP_ROUTER_ADDRESS,
+          value: BigNumber.from(value),
+          gasPrice: BigNumber.from(res.value.gasPriceWei),
+        });
+      } else {
+        return Result.fail('Failed to get Swap Params');
+      }
     } catch (error) {
-      return error;
+      if (error instanceof Error) {
+        return Result.fail(error.message);
+      } else {
+        return Result.fail('unable to get route');
+      }
     }
   }
 
