@@ -1,7 +1,7 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import { L2Provider } from '../src';
-import describe from 'jest';
+// import * as React from 'react';
+// import * as ReactDOM from 'react-dom';
+// import { L2Provider } from '../src';
+// import describe from 'jest';
 
 // describe('it', () => {
 
