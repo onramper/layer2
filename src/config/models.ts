@@ -86,15 +86,3 @@ export interface RouteDetails extends QuoteDetails {
     value: string; // 0x00
   };
 }
-
-export class NetworkError extends Error {
-  constructor() {
-    super('Network Error');
-  }
-}
-
-export class UnknownVariables extends Error {
-  constructor() {
-    super('You must set both slippage AND deadline variables');
-  }
-}
