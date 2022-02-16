@@ -1,17 +1,32 @@
 import { Config, DAppProvider, Mainnet, Chain, Rinkeby } from '@usedapp/core';
 import { Interface, Fragment, JsonFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
-import { ERC20, SwapRouter } from '../abis';
-import React, { createContext, ReactNode, useContext } from 'react';
+import { ERC20 } from '../abis';
+import React, { createContext, useContext } from 'react';
 import { Wallet, initializeWallets } from './wallets';
 import { BigNumber } from 'ethers';
 import { parseEther } from '@ethersproject/units';
+import {
+  Info,
+  SwapParams,
+  ProviderProps,
+  WatchAssetParams,
+  RouteDetails,
+  QuoteDetails,
+} from './models';
+import {
+  APIErrorPayload,
+  InsufficientFundsError,
+  InvalidParamsError,
+  OperationalError,
+  NetworkError,
+} from '../errors';
+import { getTokens, TokenList } from '../tokens';
 
 // No need change the address, same is for all testnets and mainnet
 export const SWAP_ROUTER_ADDRESS = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
 export const ROUTER_API =
   'https://a7sf9dqtif.execute-api.eu-central-1.amazonaws.com/prod';
-export const TOKEN_LIST = 'https://tokens.uniswap.org/';
 
 export const DEFAULTS = {
   slippageTolerance: 1, // 1%
@@ -19,60 +34,6 @@ export const DEFAULTS = {
 };
 
 export const SUPPORTED_CHAINS = [1, 4];
-
-export interface SwapParams {
-  data: string; // route.methodParameters.calldata,
-  to: string; //  V3_SWAP_ROUTER_ADDRESS,
-  value: BigNumber; // BigNumber.from(route.methodParameters.value),
-  gasPrice: BigNumber;
-}
-// Interfaces
-interface ProviderProps {
-  children?: ReactNode;
-}
-
-// use this interface for type assertion inside addERC20ToMetamask()
-interface WatchAssetParams {
-  type: string; // In the future, other standards will be supported
-  options: {
-    address: string; // The address of the token contract
-    symbol: string; // A ticker symbol or shorthand, up to 5 characters
-    decimals: number; // The number of token decimals
-    image: string; // A string url of the token logo
-  };
-}
-
-export interface Info {
-  name: string;
-  symbol: string;
-  decimals: number;
-  wethAddress: string;
-}
-
-export interface QuoteResult {
-  blockNumber: string;
-  amount: string;
-  amountDecimals: string;
-  quote: string;
-  quoteDecimals: string;
-  quoteGasAdjusted: string;
-  quoteGasAdjustedDecimals: string;
-  gasUseEstimateQuote: string;
-  gasUseEstimateQuoteDecimals: string;
-  gasUseEstimate: string;
-  gasUseEstimateUSD: string;
-  gasPriceWei: string;
-  route: any[][];
-  routeString: string;
-  quoteId: string;
-}
-
-export interface RouteResult extends QuoteResult {
-  methodParameters: {
-    calldata: string; // long hexString
-    value: string; // 0x00
-  };
-}
 
 const chainIdToNetwork: { [key: number]: Chain } = {
   1: Mainnet,
@@ -98,7 +59,6 @@ export class Layer2 {
   public wallets: Wallet[];
   public config: Config;
   public interfaces: { [key: string]: Interface };
-  public contracts: { [key: string]: Contract };
   public defaults: { [key: string]: number };
 
   constructor() {
@@ -116,14 +76,6 @@ export class Layer2 {
 
     this.interfaces = {
       erc20Interface: this.loadInterface(ERC20),
-      swapRouterInterface: this.loadInterface(SwapRouter.abi),
-    };
-
-    this.contracts = {
-      swapRouterContract: this.loadContract(
-        SwapRouter.abi,
-        SWAP_ROUTER_ADDRESS
-      ),
     };
   }
 
@@ -132,7 +84,7 @@ export class Layer2 {
     inputAmount: number, // not formatted
     tokenOut: string, // address
     exactOut: boolean = false
-  ): Promise<QuoteResult | unknown> {
+  ): Promise<QuoteDetails> {
     const tradeType = exactOut ? 'exactOut' : 'exactIn';
     const formattedAmount = parseEther(inputAmount.toString()).toString();
 
@@ -140,66 +92,103 @@ export class Layer2 {
       const res = await fetch(
         `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}`
       );
-      return res.json();
+      const formattedResponse = await res?.json();
+
+      if (res.status === 400) {
+        throw new InvalidParamsError(formattedResponse as APIErrorPayload);
+      }
+
+      if (res.status === 200) {
+        return formattedResponse as QuoteDetails;
+      }
+
+      // server error or some other error
+      throw new OperationalError();
     } catch (error) {
-      return error;
+      console.log(error);
+      throw new OperationalError();
     }
   }
 
   public async getRoute(
+    balance: number,
     chainID: number,
     inputAmount: number,
     tokenOut: string,
     recipient: string,
     exactOut: boolean = false
-  ): Promise<RouteResult | unknown> {
+  ): Promise<RouteDetails> {
     const tradeType = exactOut ? 'exactOut' : 'exactIn';
     const formattedAmount = parseEther(inputAmount.toString()).toString();
+
+    const tokenSymbol = chainIDToNetworkInfo[chainID].symbol;
+
     const { slippageTolerance, deadline } = DEFAULTS;
     try {
+      // user does not have enough ETH
+      if (inputAmount > balance) {
+        throw new InsufficientFundsError(tokenSymbol);
+      }
+
       const res = await fetch(
-        `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
+        `${ROUTER_API}/quote?tokenInAddress=${tokenSymbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
       );
-      return res.json();
+
+      const formattedResponse = await res?.json();
+
+      if (res.ok) {
+        return formattedResponse as RouteDetails;
+      } else if (res.status === 400) {
+        // extract only detail & errorCode
+        const { detail, errorCode } = formattedResponse;
+        throw new InvalidParamsError({ detail, errorCode } as APIErrorPayload);
+      } else {
+        throw new NetworkError();
+      }
     } catch (error) {
-      return error;
+      // re-throw errors
+      throw error;
     }
   }
 
   public async getSwapParams(
+    balance: number,
     chainID: number,
     inputAmount: number,
     tokenOut: string,
     recipient: string,
     exactOut: boolean = false
-  ): Promise<SwapParams | unknown> {
+  ): Promise<SwapParams> {
     try {
       const res = await this.getRoute(
+        balance,
         chainID,
         inputAmount,
         tokenOut,
         recipient,
         exactOut
       );
-      const routeResult = res as RouteResult;
-      const { calldata, value } = routeResult.methodParameters;
+
+      const { calldata, value } = res.methodParameters;
       return {
         data: calldata,
         to: SWAP_ROUTER_ADDRESS,
         value: BigNumber.from(value),
-        gasPrice: BigNumber.from(routeResult.gasPriceWei),
-      } as SwapParams;
+        gasPrice: BigNumber.from(res.gasPriceWei),
+      };
     } catch (error) {
-      return error;
+      // re-throw errors
+      throw error;
     }
   }
 
-  public async getTokens() {
-    try {
-      const res = await fetch(TOKEN_LIST);
-      return res.json();
-    } catch (error) {
-      return error;
+  public async getTokens(): Promise<TokenList | undefined> {
+    const res = await getTokens();
+    const formattedResponse = await res.json();
+    if (res.ok) {
+      return formattedResponse as TokenList;
+    } else {
+      throw new Error('Unable to fetch tokens');
     }
   }
 
