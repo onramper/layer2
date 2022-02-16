@@ -94,7 +94,7 @@ export class Layer2 {
       );
       const formattedResponse = await res?.json();
 
-      if (res.status == 400) {
+      if (res.status === 400) {
         throw new InvalidParamsError(formattedResponse as APIErrorPayload);
       }
 
