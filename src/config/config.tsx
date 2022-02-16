@@ -8,13 +8,19 @@ import { BigNumber } from 'ethers';
 import { parseEther } from '@ethersproject/units';
 import {
   Info,
-  SwapParamsResult,
+  SwapParams,
   ProviderProps,
   WatchAssetParams,
-  RouteResult,
-  QuoteResult,
-  Result,
+  RouteDetails,
+  QuoteDetails,
 } from './models';
+import {
+  APIErrorPayload,
+  InsufficientFundsError,
+  InvalidParamsError,
+  OperationalError,
+  NetworkError,
+} from '../errors';
 
 // No need change the address, same is for all testnets and mainnet
 export const SWAP_ROUTER_ADDRESS = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
@@ -78,7 +84,7 @@ export class Layer2 {
     inputAmount: number, // not formatted
     tokenOut: string, // address
     exactOut: boolean = false
-  ): Promise<QuoteResult> {
+  ): Promise<QuoteDetails> {
     const tradeType = exactOut ? 'exactOut' : 'exactIn';
     const formattedAmount = parseEther(inputAmount.toString()).toString();
 
@@ -86,78 +92,91 @@ export class Layer2 {
       const res = await fetch(
         `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}`
       );
-      if (res.status === 200) {
-        const formattedResponse = await res.json();
-        return Result.ok(formattedResponse);
-      } else {
-        return Result.fail('unable to get quote');
+      const formattedResponse = await res?.json();
+
+      if (res.status == 400) {
+        throw new InvalidParamsError(formattedResponse as APIErrorPayload);
       }
+
+      if (res.status === 200) {
+        return formattedResponse as QuoteDetails;
+      }
+
+      throw new OperationalError();
     } catch (error) {
-      return Result.fail('unable to get quote');
+      throw new OperationalError();
     }
   }
 
   public async getRoute(
+    balance: number,
     chainID: number,
     inputAmount: number,
     tokenOut: string,
     recipient: string,
     exactOut: boolean = false
-  ): Promise<RouteResult> {
+  ): Promise<RouteDetails> {
     const tradeType = exactOut ? 'exactOut' : 'exactIn';
     const formattedAmount = parseEther(inputAmount.toString()).toString();
+
+    const tokenSymbol = chainIDToNetworkInfo[chainID].symbol;
+
     const { slippageTolerance, deadline } = DEFAULTS;
     try {
+      // user does not have enough ETH
+      if (inputAmount > balance) {
+        throw new InsufficientFundsError(tokenSymbol);
+      }
+
       const res = await fetch(
-        `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
+        `${ROUTER_API}/quote?tokenInAddress=${tokenSymbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
       );
-      if (res.status === 200) {
-        const formattedResponse = await res.json();
-        return Result.ok(formattedResponse);
+
+      const formattedResponse = await res?.json();
+
+      if (res.ok) {
+        return formattedResponse as RouteDetails;
+      } else if (res.status === 400) {
+        // extract only detail & errorCode
+        const { detail, errorCode } = formattedResponse;
+        throw new InvalidParamsError({ detail, errorCode } as APIErrorPayload);
       } else {
-        return Result.fail('unable to get route');
+        throw new NetworkError();
       }
     } catch (error) {
-      if (error instanceof Error) {
-        return Result.fail(error.message);
-      } else {
-        return Result.fail('unable to get route');
-      }
+      // re-throw errors
+      throw error;
     }
   }
 
   public async getSwapParams(
+    balance: number,
     chainID: number,
     inputAmount: number,
     tokenOut: string,
     recipient: string,
     exactOut: boolean = false
-  ): Promise<SwapParamsResult> {
+  ): Promise<SwapParams> {
     try {
       const res = await this.getRoute(
+        balance,
         chainID,
         inputAmount,
         tokenOut,
         recipient,
         exactOut
       );
-      if (res.isSuccess && res.value) {
-        const { calldata, value } = res.value.methodParameters;
-        return Result.ok({
-          data: calldata,
-          to: SWAP_ROUTER_ADDRESS,
-          value: BigNumber.from(value),
-          gasPrice: BigNumber.from(res.value.gasPriceWei),
-        });
-      } else {
-        return Result.fail('Failed to get Swap Params');
-      }
+
+      const { calldata, value } = res.methodParameters;
+      return {
+        data: calldata,
+        to: SWAP_ROUTER_ADDRESS,
+        value: BigNumber.from(value),
+        gasPrice: BigNumber.from(res.gasPriceWei),
+      };
     } catch (error) {
-      if (error instanceof Error) {
-        return Result.fail(error.message);
-      } else {
-        return Result.fail('unable to get route');
-      }
+      // re-throw errors
+      throw error;
     }
   }
 
