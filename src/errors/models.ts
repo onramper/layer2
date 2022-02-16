@@ -25,7 +25,7 @@ export interface APIErrorPayload {
   errorCode: string;
 }
 
-// if 1 or more arguments are invalid
+// if 1 or more arguments to router API are invalid
 export class InvalidParamsError extends Error {
   public readonly detail: string;
   public readonly errorCode: string;
@@ -36,5 +36,3 @@ export class InvalidParamsError extends Error {
     this.errorCode = errorCode;
   }
 }
-
-// ? create custom error types here and export them from barrel file

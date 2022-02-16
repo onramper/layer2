@@ -35,7 +35,7 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@config/*": ["src/config/*"],
+      "@config/*": ["src/core/*"],
       "@services/*": ["src/services/*"],
       "@abis/*": ["src/abis/*"],
       "@tests/*": ["tests/*"]
