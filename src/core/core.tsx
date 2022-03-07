@@ -31,6 +31,17 @@ import {
 } from './constants';
 import { JsonRpcProvider } from '@ethersproject/providers';
 
+export const resolveWeth = (token: TokenInfo) => {
+  if (token.symbol === 'WETH') {
+    return {
+      ...token,
+      symbol: 'ETH',
+    };
+  } else {
+    return token;
+  }
+};
+
 export const wallets = initializeWallets(SUPPORTED_CHAINS);
 
 export const config: Config = {
@@ -60,10 +71,12 @@ export const getQuote = async (
   }
 
   const formattedAmount = parseEther(inputAmount.toString()).toString();
+  // token symbol "WETH"=> "ETH"
+  const formattedTokenIn = resolveWeth(tokenIn);
 
   try {
     const res = await fetch(
-      `${ROUTER_API}/quote?tokenInAddress=${tokenIn.address}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}`
+      `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}`
     );
     const formattedResponse = await res?.json();
 
@@ -86,8 +99,8 @@ export const getQuote = async (
 export const getRoute = async (
   balance: number,
   tokenIn: TokenInfo,
-  inputAmount: number,
   tokenOut: TokenInfo,
+  inputAmount: number,
   recipient: string,
   exactOut: boolean = false,
   options: {
@@ -104,9 +117,12 @@ export const getRoute = async (
     throw new IncompatibleChainIdError(tokenIn, tokenOut);
   }
 
-  if (!(chainIdIn in SUPPORTED_CHAINS)) {
+  if (!SUPPORTED_CHAINS.includes(chainIdIn)) {
     throw new UnsupportedNetworkError();
   }
+
+  // token symbol "WETH"=> "ETH"
+  const formattedTokenIn = resolveWeth(tokenIn);
 
   const { slippageTolerance, deadline } = options;
 
@@ -116,7 +132,7 @@ export const getRoute = async (
     }
 
     const res = await fetch(
-      `${ROUTER_API}/quote?tokenInAddress=${tokenIn.address}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
+      `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
     );
 
     const formattedResponse = await res?.json();
@@ -186,8 +202,8 @@ export const getSwapParams = async (
     const res = await getRoute(
       balance,
       tokenIn,
-      inputAmount,
       tokenOut,
+      inputAmount,
       recipient,
       exactOut,
       options
@@ -303,8 +319,8 @@ export interface ContextProps {
   getRoute: (
     balance: number,
     tokenIn: TokenInfo,
-    inputAmount: number,
     tokenOut: TokenInfo,
+    inputAmount: number,
     recipient: string,
     exactOut?: boolean,
     options?: {
