@@ -173,8 +173,8 @@ export const loadContract = (
 export const getSwapParams = async (
   balance: number,
   tokenIn: TokenInfo,
-  inputAmount: number,
   tokenOut: TokenInfo,
+  inputAmount: number,
   recipient: string,
   exactOut: boolean = false,
   options: {
@@ -330,8 +330,8 @@ export interface ContextProps {
   getSwapParams: (
     balance: number,
     tokenIn: TokenInfo,
-    inputAmount: number,
     tokenOut: TokenInfo,
+    inputAmount: number,
     recipient: string,
     exactOut?: boolean,
     options?: {

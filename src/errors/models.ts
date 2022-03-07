@@ -2,7 +2,7 @@ import {
   chainIdToNetwork,
   chainIDToNetworkInfo,
   SUPPORTED_CHAINS,
-} from '@config/constants';
+} from 'src/core/constants';
 import { TokenInfo } from 'src/tokens';
 
 // if (inputAmount > balance)
