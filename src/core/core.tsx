@@ -1,16 +1,14 @@
-import { Config, DAppProvider, Mainnet, Chain, Rinkeby } from '@usedapp/core';
+import { Config, DAppProvider, useEthers } from '@usedapp/core';
 import { Interface, Fragment, JsonFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
-import { ERC20 } from '../abis';
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useCallback, useContext, useState } from 'react';
 import { Wallet, initializeWallets } from './wallets';
 import { BigNumber } from 'ethers';
 import { parseEther } from '@ethersproject/units';
 import {
-  Info,
   SwapParams,
   ProviderProps,
-  WatchAssetParams,
+  MetaMaskProvider,
   RouteDetails,
   QuoteDetails,
 } from './models';
@@ -21,271 +19,315 @@ import {
   OperationalError,
   NetworkError,
 } from '../errors';
-import { getTokens, TokenList } from '../tokens';
+import { getUniswapTokens, TokenInfo, TokenList } from '../tokens';
+import {
+  SWAP_ROUTER_ADDRESS,
+  ROUTER_API,
+  DEFAULTS,
+  SUPPORTED_CHAINS,
+  chainIdToNetwork,
+  chainIDToNetworkInfo,
+} from './constants';
+import { JsonRpcProvider } from '@ethersproject/providers';
 
-// No need change the address, same is for all testnets and mainnet
-export const SWAP_ROUTER_ADDRESS = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
-export const ROUTER_API =
-  'https://a7sf9dqtif.execute-api.eu-central-1.amazonaws.com/prod';
+export const wallets = initializeWallets(SUPPORTED_CHAINS);
 
-export const DEFAULTS = {
-  slippageTolerance: 1, // 1%
-  deadline: 200, // 200 seconds
-};
-
-export const SUPPORTED_CHAINS = [1, 4];
-
-const chainIdToNetwork: { [key: number]: Chain } = {
-  1: Mainnet,
-  4: Rinkeby,
-};
-
-const chainIDToNetworkInfo: { [key: number]: Info } = {
-  1: {
-    name: 'mainnet',
-    symbol: 'ETH',
-    decimals: 18,
-    wethAddress: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
-  },
-  4: {
-    name: 'rinkeby',
-    symbol: 'ETH',
-    decimals: 18,
-    wethAddress: '0xc778417E063141139Fce010982780140Aa0cD5Ab',
+export const config: Config = {
+  autoConnect: false,
+  notifications: {
+    expirationPeriod: 30000,
+    checkInterval: 2000,
   },
 };
 
-export class Layer2 {
-  public wallets: Wallet[];
-  public config: Config;
-  public interfaces: { [key: string]: Interface };
-  public defaults: { [key: string]: number };
+export const getQuote = async (
+  chainID: number,
+  inputAmount: number, // not formatted
+  tokenOut: string, // address
+  exactOut: boolean = false
+): Promise<QuoteDetails> => {
+  const tradeType = exactOut ? 'exactOut' : 'exactIn';
+  const formattedAmount = parseEther(inputAmount.toString()).toString();
 
-  constructor() {
-    this.wallets = initializeWallets(SUPPORTED_CHAINS);
-    this.defaults = DEFAULTS;
-
-    this.config = {
-      autoConnect: false,
-      notifications: {
-        expirationPeriod: 30000,
-        checkInterval: 2000,
-      },
-      readOnlyChainId: undefined,
-    };
-
-    this.interfaces = {
-      erc20Interface: this.loadInterface(ERC20),
-    };
-  }
-
-  public async getQuote(
-    chainID: number,
-    inputAmount: number, // not formatted
-    tokenOut: string, // address
-    exactOut: boolean = false
-  ): Promise<QuoteDetails> {
-    const tradeType = exactOut ? 'exactOut' : 'exactIn';
-    const formattedAmount = parseEther(inputAmount.toString()).toString();
-
-    try {
-      const res = await fetch(
-        `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}`
-      );
-      const formattedResponse = await res?.json();
-
-      if (res.status === 400) {
-        throw new InvalidParamsError(formattedResponse as APIErrorPayload);
-      }
-
-      if (res.status === 200) {
-        return formattedResponse as QuoteDetails;
-      }
-
-      // server error or some other error
-      throw new OperationalError();
-    } catch (error) {
-      console.log(error);
-      throw new OperationalError();
-    }
-  }
-
-  public async getRoute(
-    balance: number,
-    chainID: number,
-    inputAmount: number,
-    tokenOut: string,
-    recipient: string,
-    exactOut: boolean = false
-  ): Promise<RouteDetails> {
-    const tradeType = exactOut ? 'exactOut' : 'exactIn';
-    const formattedAmount = parseEther(inputAmount.toString()).toString();
-
-    const tokenSymbol = chainIDToNetworkInfo[chainID].symbol;
-
-    const { slippageTolerance, deadline } = DEFAULTS;
-    try {
-      // user does not have enough ETH
-      if (inputAmount > balance) {
-        throw new InsufficientFundsError(tokenSymbol);
-      }
-
-      const res = await fetch(
-        `${ROUTER_API}/quote?tokenInAddress=${tokenSymbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
-      );
-
-      const formattedResponse = await res?.json();
-
-      if (res.ok) {
-        return formattedResponse as RouteDetails;
-      } else if (res.status === 400) {
-        // extract only detail & errorCode
-        const { detail, errorCode } = formattedResponse;
-        throw new InvalidParamsError({ detail, errorCode } as APIErrorPayload);
-      } else {
-        throw new NetworkError();
-      }
-    } catch (error) {
-      // re-throw errors
-      throw error;
-    }
-  }
-
-  public async getSwapParams(
-    balance: number,
-    chainID: number,
-    inputAmount: number,
-    tokenOut: string,
-    recipient: string,
-    exactOut: boolean = false
-  ): Promise<SwapParams> {
-    try {
-      const res = await this.getRoute(
-        balance,
-        chainID,
-        inputAmount,
-        tokenOut,
-        recipient,
-        exactOut
-      );
-
-      const { calldata, value } = res.methodParameters;
-      return {
-        data: calldata,
-        to: SWAP_ROUTER_ADDRESS,
-        value: BigNumber.from(value),
-        gasPrice: BigNumber.from(res.gasPriceWei),
-      };
-    } catch (error) {
-      // re-throw errors
-      throw error;
-    }
-  }
-
-  public async getTokens(): Promise<TokenList | undefined> {
-    const res = await getTokens();
-    const formattedResponse = await res.json();
-    if (res.ok) {
-      return formattedResponse as TokenList;
-    } else {
-      throw new Error('Unable to fetch tokens');
-    }
-  }
-
-  // return user's address page on Etherscan
-  blockExplorerAddressLink(
-    chainID: number,
-    address: string
-  ): string | undefined {
-    return chainIdToNetwork[chainID].getExplorerAddressLink(address);
-  }
-
-  // return user's transaction info page on Etherscan
-  blockExplorerTransactionLink(
-    chainID: number,
-    transactionHash: string
-  ): string | undefined {
-    return chainIdToNetwork[chainID].getExplorerTransactionLink(
-      transactionHash
-    );
-  }
-
-  // pass in [JSON].abi
-  public loadInterface(
-    abi: string | ReadonlyArray<Fragment | JsonFragment | string>
-  ): Interface {
-    return new Interface(abi);
-  }
-
-  // pass in [JSON].abi & address
-  public loadContract(
-    abi: string | ReadonlyArray<Fragment | JsonFragment | string>,
-    address: string
-  ): Contract {
-    const contractInterface = this.loadInterface(abi);
-    const contract = new Contract(address, contractInterface);
-
-    return contract;
-  }
-}
-
-export const addTokenToMetamask = async (
-  library: any,
-  address: string,
-  decimals: number
-): Promise<boolean> => {
   try {
-    const result = await library.provider?.request({
-      method: 'wallet_watchAsset',
-      params: {
-        type: 'ERC20',
-        options: {
-          address: address,
-          symbol: 'DAI',
-          decimals: decimals,
-        },
-      } as WatchAssetParams,
-    });
+    const res = await fetch(
+      `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}`
+    );
+    const formattedResponse = await res?.json();
 
-    return result;
+    if (res.status === 400) {
+      throw new InvalidParamsError(formattedResponse as APIErrorPayload);
+    }
+
+    if (res.status === 200) {
+      return formattedResponse as QuoteDetails;
+    }
+
+    // server error or some other error
+    throw new OperationalError();
   } catch (error) {
-    return false;
+    console.log(error);
+    throw new OperationalError();
   }
 };
 
-export const getConfig = (): Config => {
-  return {
-    autoConnect: false,
-    notifications: {
-      expirationPeriod: 30000,
-      checkInterval: 2000,
-    },
-  };
+export const getRoute = async (
+  balance: number,
+  chainID: number,
+  inputAmount: number,
+  tokenOut: string,
+  recipient: string,
+  exactOut: boolean = false
+): Promise<RouteDetails> => {
+  const tradeType = exactOut ? 'exactOut' : 'exactIn';
+  const formattedAmount = parseEther(inputAmount.toString()).toString();
+
+  const tokenSymbol = chainIDToNetworkInfo[chainID].symbol;
+
+  const { slippageTolerance, deadline } = DEFAULTS;
+  try {
+    // user does not have enough ETH
+    if (inputAmount > balance) {
+      throw new InsufficientFundsError(tokenSymbol);
+    }
+
+    const res = await fetch(
+      `${ROUTER_API}/quote?tokenInAddress=${tokenSymbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
+    );
+
+    const formattedResponse = await res?.json();
+
+    if (res.ok) {
+      return formattedResponse as RouteDetails;
+    } else if (res.status === 400) {
+      // extract only detail & errorCode
+      const { detail, errorCode } = formattedResponse;
+      throw new InvalidParamsError({ detail, errorCode } as APIErrorPayload);
+    } else {
+      throw new NetworkError();
+    }
+  } catch (error) {
+    // re-throw errors
+    throw error;
+  }
+};
+
+// return user's address page on Etherscan
+export const blockExplorerAddressLink = (
+  chainID: number,
+  address: string
+): string | undefined => {
+  return chainIdToNetwork[chainID].getExplorerAddressLink(address);
+};
+
+// return user's transaction info page on Etherscan
+export const blockExplorerTransactionLink = (
+  chainID: number,
+  transactionHash: string
+): string | undefined => {
+  return chainIdToNetwork[chainID].getExplorerTransactionLink(transactionHash);
+};
+
+// pass in [JSON].abi
+export const loadInterface = (
+  abi: string | ReadonlyArray<Fragment | JsonFragment | string>
+): Interface => {
+  return new Interface(abi);
+};
+
+// pass in [JSON].abi & address
+export const loadContract = (
+  abi: string | ReadonlyArray<Fragment | JsonFragment | string>,
+  address: string
+): Contract => {
+  const contractInterface = loadInterface(abi);
+  const contract = new Contract(address, contractInterface);
+
+  return contract;
+};
+
+export const getSwapParams = async (
+  balance: number,
+  chainID: number,
+  inputAmount: number,
+  tokenOut: string,
+  recipient: string,
+  exactOut: boolean = false
+): Promise<SwapParams> => {
+  try {
+    const res = await getRoute(
+      balance,
+      chainID,
+      inputAmount,
+      tokenOut,
+      recipient,
+      exactOut
+    );
+
+    const { calldata, value } = res.methodParameters;
+    return {
+      data: calldata,
+      to: SWAP_ROUTER_ADDRESS,
+      value: BigNumber.from(value),
+      gasPrice: BigNumber.from(res.gasPriceWei),
+    };
+  } catch (error) {
+    // re-throw errors
+    throw error;
+  }
+};
+
+export const getTokens = async (): Promise<TokenList | undefined> => {
+  const res = await getUniswapTokens();
+  const formattedResponse = await res.json();
+  if (res.ok) {
+    return formattedResponse as TokenList;
+  } else {
+    throw new Error('Unable to fetch tokens');
+  }
+};
+
+export const uriToHttp = (uri: string): string[] => {
+  const protocol = uri.split(':')[0].toLowerCase();
+  switch (protocol) {
+    case 'data':
+      return [uri];
+    case 'https':
+      return [uri];
+    case 'http':
+      return ['https' + uri.substr(4), uri];
+    case 'ipfs':
+      return [
+        `https://cloudflare-ipfs.com/ipfs/${
+          uri.match(/^ipfs:(\/\/)?(.*)$/i)?.[2]
+        }/`,
+        `https://ipfs.io/ipfs/${uri.match(/^ipfs:(\/\/)?(.*)$/i)?.[2]}/`,
+      ];
+    case 'ipns':
+      return [
+        `https://cloudflare-ipfs.com/ipns/${
+          uri.match(/^ipns:(\/\/)?(.*)$/i)?.[2]
+        }/`,
+        `https://ipfs.io/ipns/${uri.match(/^ipns:(\/\/)?(.*)$/i)?.[2]}/`,
+      ];
+    case 'ar':
+      return [`https://arweave.net/${uri.match(/^ar:(\/\/)?(.*)$/i)?.[2]}`];
+    default:
+      return [];
+  }
+};
+
+export const useAddTokenToMetamask = (
+  token: TokenInfo
+): {
+  addToken: () => void;
+  success: boolean | null;
+} => {
+  const [success, setSuccess] = useState<boolean | null>(null);
+  const { library } = useEthers();
+
+  const addToken = useCallback(() => {
+    if (library && isMetaMaskProvider(library) && token) {
+      const { address, symbol, decimals, logoURI } = token;
+      const logoURL = logoURI ? uriToHttp(logoURI)[0] : '';
+      library.provider
+        .request({
+          method: 'wallet_watchAsset',
+          params: {
+            type: 'ERC20',
+            options: {
+              address: address,
+              symbol: symbol,
+              decimals: decimals,
+              image: logoURL,
+            },
+          },
+        })
+        .then(success => {
+          setSuccess(success);
+        })
+        .catch(() => setSuccess(false));
+    } else {
+      setSuccess(false);
+    }
+  }, [library, token]);
+
+  return { addToken, success };
+};
+
+// a type guard for MM specific methods/properties
+export const isMetaMaskProvider = (
+  library: MetaMaskProvider | JsonRpcProvider
+): library is MetaMaskProvider => {
+  return (library as MetaMaskProvider)?.provider?.request !== undefined;
 };
 
 export interface ContextProps {
-  layer2: Layer2;
-  addTokenToMetamask: (
-    library: any,
-    address: string,
-    decimals: number
-  ) => Promise<boolean>;
-  config: Config;
   wallets: Wallet[];
+  defaults: { [key: string]: number };
+  getQuote: (
+    chainID: number,
+    inputAmount: number,
+    tokenOut: string,
+    exactOut?: boolean
+  ) => Promise<QuoteDetails>;
+  getRoute: (
+    balance: number,
+    chainID: number,
+    inputAmount: number,
+    tokenOut: string,
+    recipient: string,
+    exactOut?: boolean
+  ) => Promise<RouteDetails>;
+  blockExplorerAddressLink: (
+    chainID: number,
+    address: string
+  ) => string | undefined;
+  blockExplorerTransactionLink: (
+    chainID: number,
+    transactionHash: string
+  ) => string | undefined;
+  loadInterface: (
+    abi: string | ReadonlyArray<Fragment | JsonFragment | string>
+  ) => Interface;
+  loadContract: (
+    abi: string | ReadonlyArray<Fragment | JsonFragment | string>,
+    address: string
+  ) => Contract;
+  getSwapParams: (
+    balance: number,
+    chainID: number,
+    inputAmount: number,
+    tokenOut: string,
+    recipient: string,
+    exactOut?: boolean
+  ) => Promise<SwapParams>;
+  getTokens: () => Promise<TokenList | undefined>;
+  useAddTokenToMetamask: (
+    token: TokenInfo
+  ) => {
+    addToken: () => void;
+    success: boolean | null;
+  };
+  config: Config;
 }
 
 export const L2Context = createContext({} as ContextProps);
 
 export const L2Provider = ({ children }: ProviderProps) => {
-  const layer2 = new Layer2();
-  const config = getConfig();
-  const wallets = layer2.wallets;
-
   const value = {
-    layer2,
-    addTokenToMetamask,
-    config,
     wallets,
+    defaults: DEFAULTS,
+    getQuote,
+    getRoute,
+    blockExplorerAddressLink,
+    blockExplorerTransactionLink,
+    loadInterface,
+    loadContract,
+    getSwapParams,
+    getTokens,
+    useAddTokenToMetamask,
+    config,
   };
   return (
     <L2Context.Provider value={value}>
