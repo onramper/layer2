@@ -55,7 +55,7 @@ export const getQuote = async (
     throw new IncompatibleChainIdError(tokenIn, tokenOut);
   }
 
-  if (!(chainIdIn in SUPPORTED_CHAINS)) {
+  if (!SUPPORTED_CHAINS.includes(chainIdIn)) {
     throw new UnsupportedNetworkError();
   }
 
@@ -63,7 +63,7 @@ export const getQuote = async (
 
   try {
     const res = await fetch(
-      `${ROUTER_API}/quote?tokenInAddress=${tokenIn.address}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}`
+      `${ROUTER_API}/quote?tokenInAddress=${tokenIn.address}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}`
     );
     const formattedResponse = await res?.json();
 
