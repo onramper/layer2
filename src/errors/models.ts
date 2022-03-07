@@ -1,3 +1,10 @@
+import {
+  chainIdToNetwork,
+  chainIDToNetworkInfo,
+  SUPPORTED_CHAINS,
+} from '@config/constants';
+import { TokenInfo } from 'src/tokens';
+
 // if (inputAmount > balance)
 export class InsufficientFundsError extends Error {
   constructor(token: string) {
@@ -34,5 +41,29 @@ export class InvalidParamsError extends Error {
     super('Invalid arguments');
     this.detail = detail;
     this.errorCode = errorCode;
+  }
+}
+
+export class IncompatibleChainIdError extends Error {
+  constructor(tokenIn: TokenInfo, tokenOut: TokenInfo) {
+    super(
+      `You can not swap across networks. Input token (${
+        tokenIn.symbol
+      }) is not on the same network as output token (${
+        tokenOut.symbol
+      }). \nBoth tokens must be one ${chainIdToNetwork[tokenIn.chainId]}`
+    );
+    this.name = 'Incompatible Chain IDs';
+  }
+}
+
+export class UnsupportedNetworkError extends Error {
+  constructor() {
+    super(
+      `Unsupported Network! \nLayer2 transactions only supported on the following networks: ${SUPPORTED_CHAINS.forEach(
+        id => id in chainIDToNetworkInfo && chainIDToNetworkInfo[id]?.name
+      )}`
+    );
+    this.name = 'Unsupported Network';
   }
 }

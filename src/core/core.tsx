@@ -18,6 +18,8 @@ import {
   InvalidParamsError,
   OperationalError,
   NetworkError,
+  IncompatibleChainIdError,
+  UnsupportedNetworkError,
 } from '../errors';
 import { getUniswapTokens, TokenInfo, TokenList } from '../tokens';
 import {
@@ -26,7 +28,6 @@ import {
   DEFAULTS,
   SUPPORTED_CHAINS,
   chainIdToNetwork,
-  chainIDToNetworkInfo,
 } from './constants';
 import { JsonRpcProvider } from '@ethersproject/providers';
 
@@ -41,17 +42,28 @@ export const config: Config = {
 };
 
 export const getQuote = async (
-  chainID: number,
+  tokenIn: TokenInfo,
+  tokenOut: TokenInfo,
   inputAmount: number, // not formatted
-  tokenOut: string, // address
   exactOut: boolean = false
 ): Promise<QuoteDetails> => {
   const tradeType = exactOut ? 'exactOut' : 'exactIn';
+  const { chainId: chainIdIn } = tokenIn;
+  const { chainId: chainIdOut } = tokenOut;
+
+  if (chainIdIn !== chainIdOut) {
+    throw new IncompatibleChainIdError(tokenIn, tokenOut);
+  }
+
+  if (!(chainIdIn in SUPPORTED_CHAINS)) {
+    throw new UnsupportedNetworkError();
+  }
+
   const formattedAmount = parseEther(inputAmount.toString()).toString();
 
   try {
     const res = await fetch(
-      `${ROUTER_API}/quote?tokenInAddress=${chainIDToNetworkInfo[chainID].symbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}`
+      `${ROUTER_API}/quote?tokenInAddress=${tokenIn.address}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}`
     );
     const formattedResponse = await res?.json();
 
@@ -73,26 +85,38 @@ export const getQuote = async (
 
 export const getRoute = async (
   balance: number,
-  chainID: number,
+  tokenIn: TokenInfo,
   inputAmount: number,
-  tokenOut: string,
+  tokenOut: TokenInfo,
   recipient: string,
-  exactOut: boolean = false
+  exactOut: boolean = false,
+  options: {
+    slippageTolerance: number;
+    deadline: number;
+  } = DEFAULTS
 ): Promise<RouteDetails> => {
   const tradeType = exactOut ? 'exactOut' : 'exactIn';
+  const { chainId: chainIdIn } = tokenIn;
+  const { chainId: chainIdOut } = tokenOut;
   const formattedAmount = parseEther(inputAmount.toString()).toString();
 
-  const tokenSymbol = chainIDToNetworkInfo[chainID].symbol;
+  if (chainIdIn !== chainIdOut) {
+    throw new IncompatibleChainIdError(tokenIn, tokenOut);
+  }
 
-  const { slippageTolerance, deadline } = DEFAULTS;
+  if (!(chainIdIn in SUPPORTED_CHAINS)) {
+    throw new UnsupportedNetworkError();
+  }
+
+  const { slippageTolerance, deadline } = options;
+
   try {
-    // user does not have enough ETH
     if (inputAmount > balance) {
-      throw new InsufficientFundsError(tokenSymbol);
+      throw new InsufficientFundsError(tokenIn.symbol);
     }
 
     const res = await fetch(
-      `${ROUTER_API}/quote?tokenInAddress=${tokenSymbol}&tokenInChainId=${chainID}&tokenOutAddress=${tokenOut}&tokenOutChainId=${chainID}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
+      `${ROUTER_API}/quote?tokenInAddress=${tokenIn.address}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
     );
 
     const formattedResponse = await res?.json();
@@ -148,20 +172,25 @@ export const loadContract = (
 
 export const getSwapParams = async (
   balance: number,
-  chainID: number,
+  tokenIn: TokenInfo,
   inputAmount: number,
-  tokenOut: string,
+  tokenOut: TokenInfo,
   recipient: string,
-  exactOut: boolean = false
+  exactOut: boolean = false,
+  options: {
+    slippageTolerance: number;
+    deadline: number;
+  } = DEFAULTS
 ): Promise<SwapParams> => {
   try {
     const res = await getRoute(
       balance,
-      chainID,
+      tokenIn,
       inputAmount,
       tokenOut,
       recipient,
-      exactOut
+      exactOut,
+      options
     );
 
     const { calldata, value } = res.methodParameters;
@@ -266,18 +295,22 @@ export interface ContextProps {
   wallets: Wallet[];
   defaults: { [key: string]: number };
   getQuote: (
-    chainID: number,
+    tokenIn: TokenInfo,
+    tokenOut: TokenInfo,
     inputAmount: number,
-    tokenOut: string,
     exactOut?: boolean
   ) => Promise<QuoteDetails>;
   getRoute: (
     balance: number,
-    chainID: number,
+    tokenIn: TokenInfo,
     inputAmount: number,
-    tokenOut: string,
+    tokenOut: TokenInfo,
     recipient: string,
-    exactOut?: boolean
+    exactOut?: boolean,
+    options?: {
+      slippageTolerance: number;
+      deadline: number;
+    }
   ) => Promise<RouteDetails>;
   blockExplorerAddressLink: (
     chainID: number,
@@ -296,11 +329,15 @@ export interface ContextProps {
   ) => Contract;
   getSwapParams: (
     balance: number,
-    chainID: number,
+    tokenIn: TokenInfo,
     inputAmount: number,
-    tokenOut: string,
+    tokenOut: TokenInfo,
     recipient: string,
-    exactOut?: boolean
+    exactOut?: boolean,
+    options?: {
+      slippageTolerance: number;
+      deadline: number;
+    }
   ) => Promise<SwapParams>;
   getTokens: () => Promise<TokenList | undefined>;
   useAddTokenToMetamask: (
