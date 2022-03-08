@@ -28,7 +28,12 @@ export const SWAP_ROUTER_ADDRESS = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
 export const ROUTER_API =
   'https://a7sf9dqtif.execute-api.eu-central-1.amazonaws.com/prod';
 
-export const DEFAULTS = {
+type Options = {
+  slippageTolerance: number;
+  deadline: number;
+};
+
+export const DEFAULTS: Options = {
   slippageTolerance: 1, // 1%
   deadline: 200, // 200 seconds
 };
@@ -116,14 +121,15 @@ export class Layer2 {
     inputAmount: number,
     tokenOut: string,
     recipient: string,
-    exactOut: boolean = false
+    exactOut: boolean = false,
+    options?: Options
   ): Promise<RouteDetails> {
     const tradeType = exactOut ? 'exactOut' : 'exactIn';
     const formattedAmount = parseEther(inputAmount.toString()).toString();
 
     const tokenSymbol = chainIDToNetworkInfo[chainID].symbol;
 
-    const { slippageTolerance, deadline } = DEFAULTS;
+    const { slippageTolerance, deadline } = options || DEFAULTS;
     try {
       // user does not have enough ETH
       if (inputAmount > balance) {
@@ -157,7 +163,8 @@ export class Layer2 {
     inputAmount: number,
     tokenOut: string,
     recipient: string,
-    exactOut: boolean = false
+    exactOut: boolean = false,
+    options?: Options
   ): Promise<SwapParams> {
     try {
       const res = await this.getRoute(
@@ -166,7 +173,8 @@ export class Layer2 {
         inputAmount,
         tokenOut,
         recipient,
-        exactOut
+        exactOut,
+        options
       );
 
       const { calldata, value } = res.methodParameters;
