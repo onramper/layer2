@@ -26,3 +26,33 @@ export const isMetamaskEnabled = (): boolean => {
     return false;
   }
 };
+
+export const uriToHttp = (uri: string): string[] => {
+  const protocol = uri.split(':')[0].toLowerCase();
+  switch (protocol) {
+    case 'data':
+      return [uri];
+    case 'https':
+      return [uri];
+    case 'http':
+      return ['https' + uri.substr(4), uri];
+    case 'ipfs':
+      return [
+        `https://cloudflare-ipfs.com/ipfs/${
+          uri.match(/^ipfs:(\/\/)?(.*)$/i)?.[2]
+        }/`,
+        `https://ipfs.io/ipfs/${uri.match(/^ipfs:(\/\/)?(.*)$/i)?.[2]}/`,
+      ];
+    case 'ipns':
+      return [
+        `https://cloudflare-ipfs.com/ipns/${
+          uri.match(/^ipns:(\/\/)?(.*)$/i)?.[2]
+        }/`,
+        `https://ipfs.io/ipns/${uri.match(/^ipns:(\/\/)?(.*)$/i)?.[2]}/`,
+      ];
+    case 'ar':
+      return [`https://arweave.net/${uri.match(/^ar:(\/\/)?(.*)$/i)?.[2]}`];
+    default:
+      return [];
+  }
+};

@@ -16,10 +16,11 @@ import {
   APIErrorPayload,
   InsufficientFundsError,
   InvalidParamsError,
-  OperationalError,
-  NetworkError,
-  IncompatibleChainIdError,
+  IncompatibleNetworkError,
   UnsupportedNetworkError,
+  InvalidJSONBodyError,
+  InternalError,
+  UnknownError,
 } from '../errors';
 import { getUniswapTokens, TokenInfo, TokenList } from '../tokens';
 import {
@@ -30,6 +31,7 @@ import {
   chainIdToNetwork,
 } from './constants';
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { uriToHttp } from './utils';
 
 export const resolveWeth = (token: TokenInfo) => {
   if (token.symbol === 'WETH') {
@@ -52,48 +54,83 @@ export const config: Config = {
   },
 };
 
-export const getQuote = async (
+const handleQuoteRequest = async (url: string): Promise<QuoteDetails> => {
+  const res = await fetch(url);
+  const formattedResponse = await res.json();
+
+  if (res.ok) {
+    return formattedResponse as QuoteDetails;
+  }
+  return handleAPIErrors(res, formattedResponse);
+};
+
+const handleRouteRequest = async (url: string): Promise<RouteDetails> => {
+  const res = await fetch(url);
+  const formattedResponse = await res.json();
+
+  if (res.ok) {
+    const { methodParameters } = formattedResponse;
+    return methodParameters as RouteDetails;
+  }
+  return handleAPIErrors(res, formattedResponse);
+};
+
+const handleAPIErrors = (res: Response, formattedResponse: any) => {
+  const { detail, errorCode } = formattedResponse;
+  switch (res.status) {
+    case 400:
+      throw new InvalidParamsError({ detail, errorCode } as APIErrorPayload);
+    case 422:
+      throw new InvalidJSONBodyError({
+        detail,
+        errorCode,
+      } as APIErrorPayload);
+    case 500:
+      throw new InternalError({ detail, errorCode } as APIErrorPayload);
+    default:
+      throw new UnknownError();
+  }
+};
+
+const validateRequest = (
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
-  inputAmount: number, // not formatted
-  exactOut: boolean = false
-): Promise<QuoteDetails> => {
-  const tradeType = exactOut ? 'exactOut' : 'exactIn';
+  amount?: number,
+  balance?: number
+) => {
   const { chainId: chainIdIn } = tokenIn;
   const { chainId: chainIdOut } = tokenOut;
 
   if (chainIdIn !== chainIdOut) {
-    throw new IncompatibleChainIdError(tokenIn, tokenOut);
+    throw new IncompatibleNetworkError(tokenIn, tokenOut);
   }
 
   if (!SUPPORTED_CHAINS.includes(chainIdIn)) {
     throw new UnsupportedNetworkError();
   }
 
+  if (balance && amount && amount > balance) {
+    throw new InsufficientFundsError(tokenIn.symbol);
+  }
+};
+
+export const getQuote = async (
+  tokenIn: TokenInfo,
+  tokenOut: TokenInfo,
+  inputAmount: number, // not formatted
+  exactOut: boolean = false
+): Promise<QuoteDetails> => {
+  validateRequest(tokenIn, tokenOut);
+
+  const tradeType = exactOut ? 'exactOut' : 'exactIn';
+
   const formattedAmount = parseEther(inputAmount.toString()).toString();
   // token symbol "WETH"=> "ETH"
   const formattedTokenIn = resolveWeth(tokenIn);
 
-  try {
-    const res = await fetch(
-      `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}`
-    );
-    const formattedResponse = await res?.json();
+  const url = `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenIn.chainId}&amount=${formattedAmount}&type=${tradeType}`;
 
-    if (res.status === 400) {
-      throw new InvalidParamsError(formattedResponse as APIErrorPayload);
-    }
-
-    if (res.status === 200) {
-      return formattedResponse as QuoteDetails;
-    }
-
-    // server error or some other error
-    throw new OperationalError();
-  } catch (error) {
-    console.log(error);
-    throw new OperationalError();
-  }
+  return handleQuoteRequest(url);
 };
 
 export const getRoute = async (
@@ -108,48 +145,18 @@ export const getRoute = async (
     deadline: number;
   } = DEFAULTS
 ): Promise<RouteDetails> => {
+  validateRequest(tokenIn, tokenOut, inputAmount, balance);
+
   const tradeType = exactOut ? 'exactOut' : 'exactIn';
-  const { chainId: chainIdIn } = tokenIn;
-  const { chainId: chainIdOut } = tokenOut;
+
   const formattedAmount = parseEther(inputAmount.toString()).toString();
-
-  if (chainIdIn !== chainIdOut) {
-    throw new IncompatibleChainIdError(tokenIn, tokenOut);
-  }
-
-  if (!SUPPORTED_CHAINS.includes(chainIdIn)) {
-    throw new UnsupportedNetworkError();
-  }
-
   // token symbol "WETH"=> "ETH"
   const formattedTokenIn = resolveWeth(tokenIn);
 
   const { slippageTolerance, deadline } = options;
+  const url = `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenOut.chainId}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`;
 
-  try {
-    if (inputAmount > balance) {
-      throw new InsufficientFundsError(tokenIn.symbol);
-    }
-
-    const res = await fetch(
-      `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${chainIdIn}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${chainIdIn}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`
-    );
-
-    const formattedResponse = await res?.json();
-
-    if (res.ok) {
-      return formattedResponse as RouteDetails;
-    } else if (res.status === 400) {
-      // extract only detail & errorCode
-      const { detail, errorCode } = formattedResponse;
-      throw new InvalidParamsError({ detail, errorCode } as APIErrorPayload);
-    } else {
-      throw new NetworkError();
-    }
-  } catch (error) {
-    // re-throw errors
-    throw error;
-  }
+  return handleRouteRequest(url);
 };
 
 // return user's address page on Etherscan
@@ -224,41 +231,11 @@ export const getSwapParams = async (
 
 export const getTokens = async (): Promise<TokenList | undefined> => {
   const res = await getUniswapTokens();
-  const formattedResponse = await res.json();
   if (res.ok) {
+    const formattedResponse = await res.json();
     return formattedResponse as TokenList;
   } else {
     throw new Error('Unable to fetch tokens');
-  }
-};
-
-export const uriToHttp = (uri: string): string[] => {
-  const protocol = uri.split(':')[0].toLowerCase();
-  switch (protocol) {
-    case 'data':
-      return [uri];
-    case 'https':
-      return [uri];
-    case 'http':
-      return ['https' + uri.substr(4), uri];
-    case 'ipfs':
-      return [
-        `https://cloudflare-ipfs.com/ipfs/${
-          uri.match(/^ipfs:(\/\/)?(.*)$/i)?.[2]
-        }/`,
-        `https://ipfs.io/ipfs/${uri.match(/^ipfs:(\/\/)?(.*)$/i)?.[2]}/`,
-      ];
-    case 'ipns':
-      return [
-        `https://cloudflare-ipfs.com/ipns/${
-          uri.match(/^ipns:(\/\/)?(.*)$/i)?.[2]
-        }/`,
-        `https://ipfs.io/ipns/${uri.match(/^ipns:(\/\/)?(.*)$/i)?.[2]}/`,
-      ];
-    case 'ar':
-      return [`https://arweave.net/${uri.match(/^ar:(\/\/)?(.*)$/i)?.[2]}`];
-    default:
-      return [];
   }
 };
 

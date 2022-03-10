@@ -14,9 +14,9 @@ export class InsufficientFundsError extends Error {
 }
 
 // if some unexpected exception is thrown
-export class OperationalError extends Error {
+export class UnknownError extends Error {
   constructor() {
-    super('Internal Error');
+    super('Unknown Error');
   }
 }
 
@@ -44,7 +44,7 @@ export class InvalidParamsError extends Error {
   }
 }
 
-export class IncompatibleChainIdError extends Error {
+export class IncompatibleNetworkError extends Error {
   constructor(tokenIn: TokenInfo, tokenOut: TokenInfo) {
     super(
       `You can not swap across networks. Input token (${
@@ -65,5 +65,27 @@ export class UnsupportedNetworkError extends Error {
       )}`
     );
     this.name = 'Unsupported Network';
+  }
+}
+
+export class InvalidJSONBodyError extends Error {
+  public readonly detail: string;
+  public readonly errorCode: string;
+
+  constructor({ detail, errorCode }: APIErrorPayload) {
+    super('Invalid JSON Body');
+    this.detail = detail;
+    this.errorCode = errorCode;
+  }
+}
+
+export class InternalError extends Error {
+  public readonly detail: string;
+  public readonly errorCode: string;
+
+  constructor({ detail, errorCode }: APIErrorPayload) {
+    super('Unexpected Internal error');
+    this.detail = detail;
+    this.errorCode = errorCode;
   }
 }
