@@ -1,8 +1,8 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { formatUnits } from '@ethersproject/units';
-import { isAddress } from '@ethersproject/address';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { MetaMaskProvider } from './models';
+import { isAddress } from '@ethersproject/address';
 
 // returns formatted string for UI display
 export const formatTokenAmount = (
@@ -73,9 +73,7 @@ export const getEnsNameFromAddress = (
 ) => {
   if (isAddress(address)) {
     return library.lookupAddress(address);
-  }
-
-  throw new Error('Address Invalid');
+  } else return null;
 };
 
 // a type guard for MM specific methods/properties

@@ -47,22 +47,38 @@ export const useAddTokenToMetamask = (
   return { addToken, success };
 };
 
-export const useEnsName = (): string | null => {
+export const useEnsName = (address: string): string | null => {
   const [ensName, setEnsName] = useState<string | null>(null);
-  const { account, library } = useEthers();
+  const { library } = useEthers();
 
-  const findName = async (address: string, library: JsonRpcProvider) => {
-    const name = await getEnsNameFromAddress(address, library);
-    if (name) {
+  const findName = async () => {
+    if (library && address) {
+      const name = await getEnsNameFromAddress(address, library);
       setEnsName(name);
     }
   };
 
   useEffect(() => {
-    if (account && library) {
-      findName(account, library);
+    if (address && library) findName();
+  }, [library, address, findName]);
+
+  return ensName;
+};
+
+export const useConnectEnsName = () => {
+  const [ensName, setEnsName] = useState<string | null>(null);
+  const { account, library } = useEthers();
+
+  const findName = async () => {
+    if (library && account) {
+      const name = await getEnsNameFromAddress(account, library);
+      setEnsName(name);
     }
-  }, [account, library]);
+  };
+
+  useEffect(() => {
+    findName();
+  }, [account, library, findName]);
 
   return ensName;
 };
@@ -71,12 +87,15 @@ export const useEnsAddress = (name: string) => {
   const [address, setAddress] = useState<string | null>(null);
   const { library } = useEthers();
 
-  const findAddress = async (ensName: string, library: JsonRpcProvider) => {
-    const ensAddress = await getAddressFromEnsName(ensName, library);
-    if (ensAddress) {
-      setAddress(ensAddress);
-    }
-  };
+  const findAddress = useCallback(
+    async (ensName: string, library: JsonRpcProvider) => {
+      const ensAddress = await getAddressFromEnsName(ensName, library);
+      if (ensAddress) {
+        setAddress(ensAddress);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (name && library) {
