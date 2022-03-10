@@ -105,3 +105,27 @@ export const useEnsAddress = (name: string) => {
 
   return address;
 };
+
+export const useEnsAvatar = (addressOrName: string) => {
+  const { library } = useEthers();
+  const [avatar, setAvatar] = useState<string | null>(null);
+
+  const getEnsAvatar = async (addressOrName: string) => {
+    if (library) {
+      try {
+        if (!addressOrName) throw new Error('addressOrName is required');
+        const res = await library.getAvatar(addressOrName);
+        debugger;
+        setAvatar(res);
+      } catch (error_) {
+        setAvatar(null);
+      }
+    }
+  };
+
+  useEffect(() => {
+    getEnsAvatar(addressOrName);
+  }, [library, addressOrName]);
+
+  return avatar;
+};
