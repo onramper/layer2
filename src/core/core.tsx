@@ -54,25 +54,14 @@ export const config: Config = {
   },
 };
 
-const handleQuoteRequest = async (url: string): Promise<QuoteDetails> => {
+async function handleAPIRequest<T>(url: string): Promise<T> {
   const res = await fetch(url);
-  const formattedResponse = await res.json();
-
+  const formattedResponse: T = await res.json();
   if (res.ok) {
-    return formattedResponse as QuoteDetails;
+    return formattedResponse;
   }
   return handleAPIErrors(res, formattedResponse);
-};
-
-const handleRouteRequest = async (url: string): Promise<RouteDetails> => {
-  const res = await fetch(url);
-  const formattedResponse = await res.json();
-
-  if (res.ok) {
-    return formattedResponse as RouteDetails;
-  }
-  return handleAPIErrors(res, formattedResponse);
-};
+}
 
 const handleAPIErrors = (res: Response, formattedResponse: any) => {
   const { detail, errorCode } = formattedResponse;
@@ -129,7 +118,7 @@ export const getQuote = async (
 
   const url = `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenIn.chainId}&amount=${formattedAmount}&type=${tradeType}`;
 
-  return handleQuoteRequest(url);
+  return handleAPIRequest<QuoteDetails>(url);
 };
 
 export const getRoute = async (
@@ -155,7 +144,7 @@ export const getRoute = async (
   const { slippageTolerance, deadline } = options;
   const url = `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenOut.chainId}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`;
 
-  return handleRouteRequest(url);
+  return handleAPIRequest<RouteDetails>(url);
 };
 
 // return user's address page on Etherscan
