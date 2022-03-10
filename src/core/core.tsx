@@ -69,8 +69,7 @@ const handleRouteRequest = async (url: string): Promise<RouteDetails> => {
   const formattedResponse = await res.json();
 
   if (res.ok) {
-    const { methodParameters } = formattedResponse;
-    return methodParameters as RouteDetails;
+    return formattedResponse as RouteDetails;
   }
   return handleAPIErrors(res, formattedResponse);
 };
@@ -217,6 +216,7 @@ export const getSwapParams = async (
     );
 
     const { calldata, value } = res.methodParameters;
+    debugger;
     return {
       data: calldata,
       to: SWAP_ROUTER_ADDRESS,
@@ -229,7 +229,7 @@ export const getSwapParams = async (
   }
 };
 
-export const getTokens = async (): Promise<TokenList | undefined> => {
+export const getTokens = async (): Promise<TokenList> => {
   const res = await getUniswapTokens();
   if (res.ok) {
     const formattedResponse = await res.json();
