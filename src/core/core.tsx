@@ -1,14 +1,13 @@
-import { Config, DAppProvider, useEthers } from '@usedapp/core';
+import { Config, DAppProvider } from '@usedapp/core';
 import { Interface, Fragment, JsonFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import { Wallet, initializeWallets } from './wallets';
 import { BigNumber } from 'ethers';
 import { parseEther } from '@ethersproject/units';
 import {
   SwapParams,
   ProviderProps,
-  MetaMaskProvider,
   RouteDetails,
   QuoteDetails,
 } from './models';
@@ -30,8 +29,7 @@ import {
   SUPPORTED_CHAINS,
   chainIdToNetwork,
 } from './constants';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { uriToHttp } from './utils';
+import { useAddTokenToMetamask } from './hooks';
 
 export const resolveWeth = (token: TokenInfo) => {
   if (token.symbol === 'WETH') {
@@ -226,51 +224,6 @@ export const getTokens = async (): Promise<TokenList> => {
   } else {
     throw new Error('Unable to fetch tokens');
   }
-};
-
-export const useAddTokenToMetamask = (
-  token: TokenInfo
-): {
-  addToken: () => void;
-  success: boolean | null;
-} => {
-  const [success, setSuccess] = useState<boolean | null>(null);
-  const { library } = useEthers();
-
-  const addToken = useCallback(() => {
-    if (library && isMetaMaskProvider(library) && token) {
-      const { address, symbol, decimals, logoURI } = token;
-      const logoURL = logoURI ? uriToHttp(logoURI)[0] : '';
-      library.provider
-        .request({
-          method: 'wallet_watchAsset',
-          params: {
-            type: 'ERC20',
-            options: {
-              address: address,
-              symbol: symbol,
-              decimals: decimals,
-              image: logoURL,
-            },
-          },
-        })
-        .then(success => {
-          setSuccess(success);
-        })
-        .catch(() => setSuccess(false));
-    } else {
-      setSuccess(false);
-    }
-  }, [library, token]);
-
-  return { addToken, success };
-};
-
-// a type guard for MM specific methods/properties
-export const isMetaMaskProvider = (
-  library: MetaMaskProvider | JsonRpcProvider
-): library is MetaMaskProvider => {
-  return (library as MetaMaskProvider)?.provider?.request !== undefined;
 };
 
 export interface ContextProps {

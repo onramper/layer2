@@ -1,5 +1,8 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { formatUnits } from '@ethersproject/units';
+import { isAddress } from '@ethersproject/address';
+import { JsonRpcProvider } from '@ethersproject/providers';
+import { MetaMaskProvider } from './models';
 
 // returns formatted string for UI display
 export const formatTokenAmount = (
@@ -55,4 +58,29 @@ export const uriToHttp = (uri: string): string[] => {
     default:
       return [];
   }
+};
+
+export const getAddressFromEnsName = (
+  ensName: string,
+  library: JsonRpcProvider
+) => {
+  return library.resolveName(ensName);
+};
+
+export const getEnsNameFromAddress = (
+  address: string,
+  library: JsonRpcProvider
+) => {
+  if (isAddress(address)) {
+    return library.lookupAddress(address);
+  }
+
+  throw new Error('Address Invalid');
+};
+
+// a type guard for MM specific methods/properties
+export const isMetaMaskProvider = (
+  library: MetaMaskProvider | JsonRpcProvider
+): library is MetaMaskProvider => {
+  return (library as MetaMaskProvider)?.provider?.request !== undefined;
 };
