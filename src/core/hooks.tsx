@@ -115,8 +115,10 @@ export const useEnsAvatar = (addressOrName: string) => {
       try {
         if (!addressOrName) throw new Error('addressOrName is required');
         const res = await library.getAvatar(addressOrName);
-        debugger;
-        setAvatar(res);
+        if (res) {
+          const url = uriToHttp(res)[0];
+          setAvatar(url);
+        }
       } catch (error_) {
         setAvatar(null);
       }
