@@ -203,7 +203,6 @@ export const getSwapParams = async (
     );
 
     const { calldata, value } = res.methodParameters;
-    debugger;
     return {
       data: calldata,
       to: SWAP_ROUTER_ADDRESS,
