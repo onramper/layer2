@@ -1,8 +1,8 @@
-import { Config, DAppProvider } from '@usedapp/core';
+import { Config, DAppProvider, useEthers } from '@usedapp/core';
 import { Interface, Fragment, JsonFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
-import React, { createContext, useContext } from 'react';
-import { Wallet, initializeWallets } from './wallets';
+import React from 'react';
+import { initializeWallets } from './wallets';
 import { BigNumber } from 'ethers';
 import { parseEther } from '@ethersproject/units';
 import {
@@ -29,7 +29,6 @@ import {
   SUPPORTED_CHAINS,
   chainIdToNetwork,
 } from './constants';
-import { useAddTokenToMetamask } from './hooks';
 
 export const resolveWeth = (token: TokenInfo) => {
   if (token.symbol === 'WETH') {
@@ -226,88 +225,10 @@ export const getTokens = async (): Promise<TokenList> => {
   }
 };
 
-export interface ContextProps {
-  wallets: Wallet[];
-  defaults: { [key: string]: number };
-  getQuote: (
-    tokenIn: TokenInfo,
-    tokenOut: TokenInfo,
-    inputAmount: number,
-    exactOut?: boolean
-  ) => Promise<QuoteDetails>;
-  getRoute: (
-    balance: number,
-    tokenIn: TokenInfo,
-    tokenOut: TokenInfo,
-    inputAmount: number,
-    recipient: string,
-    exactOut?: boolean,
-    options?: {
-      slippageTolerance: number;
-      deadline: number;
-    }
-  ) => Promise<RouteDetails>;
-  blockExplorerAddressLink: (
-    chainID: number,
-    address: string
-  ) => string | undefined;
-  blockExplorerTransactionLink: (
-    chainID: number,
-    transactionHash: string
-  ) => string | undefined;
-  loadInterface: (
-    abi: string | ReadonlyArray<Fragment | JsonFragment | string>
-  ) => Interface;
-  loadContract: (
-    abi: string | ReadonlyArray<Fragment | JsonFragment | string>,
-    address: string
-  ) => Contract;
-  getSwapParams: (
-    balance: number,
-    tokenIn: TokenInfo,
-    tokenOut: TokenInfo,
-    inputAmount: number,
-    recipient: string,
-    exactOut?: boolean,
-    options?: {
-      slippageTolerance: number;
-      deadline: number;
-    }
-  ) => Promise<SwapParams>;
-  getTokens: () => Promise<TokenList | undefined>;
-  useAddTokenToMetamask: (
-    token: TokenInfo
-  ) => {
-    addToken: () => void;
-    success: boolean | null;
-  };
-  config: Config;
-}
-
-export const L2Context = createContext({} as ContextProps);
-
 export const L2Provider = ({ children }: ProviderProps) => {
-  const value = {
-    wallets,
-    defaults: DEFAULTS,
-    getQuote,
-    getRoute,
-    blockExplorerAddressLink,
-    blockExplorerTransactionLink,
-    loadInterface,
-    loadContract,
-    getSwapParams,
-    getTokens,
-    useAddTokenToMetamask,
-    config,
-  };
-  return (
-    <L2Context.Provider value={value}>
-      <DAppProvider config={config}>{children}</DAppProvider>
-    </L2Context.Provider>
-  );
+  return <DAppProvider config={config}>{children}</DAppProvider>;
 };
 
 export const useLayer2 = () => {
-  return useContext(L2Context);
+  return useEthers();
 };
