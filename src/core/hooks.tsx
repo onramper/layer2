@@ -50,16 +50,15 @@ export const useEnsName = (address: string): string | null => {
   const [ensName, setEnsName] = useState<string | null>(null);
   const { library } = useEthers();
 
-  const findName = useCallback(async () => {
-    if (library && address) {
-      const name = await getEnsNameFromAddress(address, library);
-      setEnsName(name);
-    }
-  }, [address, library]);
-
   useEffect(() => {
+    const findName = async () => {
+      if (library && address) {
+        const name = await getEnsNameFromAddress(address, library);
+        setEnsName(name);
+      }
+    };
     findName();
-  }, [library, address, findName]);
+  }, [library, address]);
 
   return ensName;
 };
@@ -68,16 +67,15 @@ export const useConnectEnsName = () => {
   const [ensName, setEnsName] = useState<string | null>(null);
   const { account, library } = useEthers();
 
-  const findName = useCallback(async () => {
-    if (library && account) {
-      const name = await getEnsNameFromAddress(account, library);
-      setEnsName(name);
-    }
-  }, [account, library]);
-
   useEffect(() => {
+    const findName = async () => {
+      if (library && account) {
+        const name = await getEnsNameFromAddress(account, library);
+        setEnsName(name);
+      }
+    };
     findName();
-  }, [account, library, findName]);
+  }, [account, library]);
 
   return ensName;
 };
@@ -86,16 +84,15 @@ export const useEnsAddress = (name: string) => {
   const [address, setAddress] = useState<string | null>(null);
   const { library } = useEthers();
 
-  const findAddress = useCallback(async () => {
-    if (name && library) {
-      const ensAddress = await getAddressFromEnsName(name, library);
-      ensAddress && setAddress(ensAddress);
-    }
-  }, [library, name]);
-
   useEffect(() => {
+    const findAddress = async () => {
+      if (name && library) {
+        const ensAddress = await getAddressFromEnsName(name, library);
+        ensAddress && setAddress(ensAddress);
+      }
+    };
     findAddress();
-  }, [name, library, findAddress]);
+  }, [name, library]);
 
   return address;
 };
@@ -104,24 +101,23 @@ export const useEnsAvatar = (addressOrName: string) => {
   const { library } = useEthers();
   const [avatar, setAvatar] = useState<string | null>(null);
 
-  const getEnsAvatar = useCallback(async () => {
-    if (library) {
-      try {
-        if (!addressOrName) throw new Error('addressOrName is required');
-        const res = await library.getAvatar(addressOrName);
-        if (res) {
-          const url = uriToHttp(res)[0];
-          setAvatar(url);
-        }
-      } catch (error_) {
-        setAvatar(null);
-      }
-    }
-  }, [addressOrName, library]);
-
   useEffect(() => {
+    const getEnsAvatar = async () => {
+      if (library) {
+        try {
+          if (!addressOrName) throw new Error('addressOrName is required');
+          const res = await library.getAvatar(addressOrName);
+          if (res) {
+            const url = uriToHttp(res)[0];
+            setAvatar(url);
+          }
+        } catch (error_) {
+          setAvatar(null);
+        }
+      }
+    };
     getEnsAvatar();
-  }, [library, addressOrName, getEnsAvatar]);
+  }, [library, addressOrName]);
 
   return avatar;
 };
