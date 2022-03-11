@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { BigNumber } from 'ethers';
+import { JsonRpcProvider } from '@ethersproject/providers';
 
 export interface SwapParams {
   data: string; // route.methodParameters.calldata,
@@ -14,12 +15,15 @@ export interface ProviderProps {
 
 // use this interface for type assertion inside addERC20ToMetamask()
 export interface WatchAssetParams {
-  type: string; // In the future, other standards will be supported
-  options: {
-    address: string; // The address of the token contract
-    symbol: string; // A ticker symbol or shorthand, up to 5 characters
-    decimals: number; // The number of token decimals
-    image: string; // A string url of the token logo
+  method: string;
+  params: {
+    type: string; // In the future, other standards will be supported
+    options: {
+      address: string; // The address of the token contract
+      symbol: string; // A ticker symbol or shorthand, up to 5 characters
+      decimals: number; // The number of token decimals
+      image: string; // A string url of the token logo
+    };
   };
 }
 
@@ -84,5 +88,11 @@ export interface RouteDetails extends QuoteDetails {
   methodParameters: {
     calldata: string; // long hexString
     value: string; // 0x00
+  };
+}
+
+export interface MetaMaskProvider extends JsonRpcProvider {
+  provider: {
+    request: (params: WatchAssetParams) => Promise<boolean>;
   };
 }

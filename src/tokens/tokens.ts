@@ -1,5 +1,5 @@
 export const TOKEN_LIST = 'https://tokens.uniswap.org/';
 
-export const getTokens = async () => {
+export const getUniswapTokens = async () => {
   return fetch(TOKEN_LIST);
 };
