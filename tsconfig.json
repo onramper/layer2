@@ -33,6 +33,12 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@config/*": ["src/core/*"],
+      "@services/*": ["src/services/*"],
+      "@abis/*": ["src/abis/*"],
+      "@tests/*": ["tests/*"]
+    }
   }
 }
