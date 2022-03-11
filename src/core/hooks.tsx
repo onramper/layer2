@@ -7,7 +7,6 @@ import {
   isMetaMaskProvider,
   uriToHttp,
 } from './utils';
-import { JsonRpcProvider } from '@ethersproject/providers';
 
 export const useAddTokenToMetamask = (
   token: TokenInfo
@@ -51,15 +50,15 @@ export const useEnsName = (address: string): string | null => {
   const [ensName, setEnsName] = useState<string | null>(null);
   const { library } = useEthers();
 
-  const findName = async () => {
+  const findName = useCallback(async () => {
     if (library && address) {
       const name = await getEnsNameFromAddress(address, library);
       setEnsName(name);
     }
-  };
+  }, [address, library]);
 
   useEffect(() => {
-    if (address && library) findName();
+    findName();
   }, [library, address, findName]);
 
   return ensName;
@@ -69,12 +68,12 @@ export const useConnectEnsName = () => {
   const [ensName, setEnsName] = useState<string | null>(null);
   const { account, library } = useEthers();
 
-  const findName = async () => {
+  const findName = useCallback(async () => {
     if (library && account) {
       const name = await getEnsNameFromAddress(account, library);
       setEnsName(name);
     }
-  };
+  }, [account, library]);
 
   useEffect(() => {
     findName();
@@ -87,21 +86,16 @@ export const useEnsAddress = (name: string) => {
   const [address, setAddress] = useState<string | null>(null);
   const { library } = useEthers();
 
-  const findAddress = useCallback(
-    async (ensName: string, library: JsonRpcProvider) => {
-      const ensAddress = await getAddressFromEnsName(ensName, library);
-      if (ensAddress) {
-        setAddress(ensAddress);
-      }
-    },
-    []
-  );
+  const findAddress = useCallback(async () => {
+    if (name && library) {
+      const ensAddress = await getAddressFromEnsName(name, library);
+      ensAddress && setAddress(ensAddress);
+    }
+  }, [library, name]);
 
   useEffect(() => {
-    if (name && library) {
-      findAddress(name, library);
-    }
-  }, [name, library]);
+    findAddress();
+  }, [name, library, findAddress]);
 
   return address;
 };
@@ -110,7 +104,7 @@ export const useEnsAvatar = (addressOrName: string) => {
   const { library } = useEthers();
   const [avatar, setAvatar] = useState<string | null>(null);
 
-  const getEnsAvatar = async (addressOrName: string) => {
+  const getEnsAvatar = useCallback(async () => {
     if (library) {
       try {
         if (!addressOrName) throw new Error('addressOrName is required');
@@ -123,11 +117,11 @@ export const useEnsAvatar = (addressOrName: string) => {
         setAvatar(null);
       }
     }
-  };
+  }, [addressOrName, library]);
 
   useEffect(() => {
-    getEnsAvatar(addressOrName);
-  }, [library, addressOrName]);
+    getEnsAvatar();
+  }, [library, addressOrName, getEnsAvatar]);
 
   return avatar;
 };
