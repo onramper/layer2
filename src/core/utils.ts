@@ -14,7 +14,6 @@ export const toHex = (decimal: number): string => {
   return '0x' + decimal.toString(16);
 };
 
-// check whether MM is installed in browser
 export const isMetamaskEnabled = (): boolean => {
   try {
     if ((window as any)?.ethereum?.isMetaMask === true) {
