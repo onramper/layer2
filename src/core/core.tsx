@@ -51,8 +51,11 @@ export const config: Config = {
   },
 };
 
-async function handleAPIRequest<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+async function handleAPIRequest<T>(
+  url: string,
+  signal?: AbortSignal
+): Promise<T> {
+  const res = await fetch(url, { signal: signal });
   const formattedResponse: T = await res.json();
   if (res.ok) {
     return formattedResponse;
@@ -103,7 +106,8 @@ export const getQuote = async (
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
   inputAmount: number, // not formatted
-  exactOut: boolean = false
+  exactOut: boolean = false,
+  signal?: AbortSignal
 ): Promise<QuoteDetails> => {
   validateRequest(tokenIn, tokenOut);
 
@@ -115,7 +119,7 @@ export const getQuote = async (
 
   const url = `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenIn.chainId}&amount=${formattedAmount}&type=${tradeType}`;
 
-  return handleAPIRequest<QuoteDetails>(url);
+  return handleAPIRequest<QuoteDetails>(url, signal);
 };
 
 export const getRoute = async (
@@ -128,7 +132,8 @@ export const getRoute = async (
   options: {
     slippageTolerance: number;
     deadline: number;
-  } = DEFAULTS
+  } = DEFAULTS,
+  signal?: AbortSignal
 ): Promise<RouteDetails> => {
   validateRequest(tokenIn, tokenOut, inputAmount, balance);
 
@@ -141,7 +146,7 @@ export const getRoute = async (
   const { slippageTolerance, deadline } = options;
   const url = `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenOut.chainId}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`;
 
-  return handleAPIRequest<RouteDetails>(url);
+  return handleAPIRequest<RouteDetails>(url, signal);
 };
 
 // return user's address page on Etherscan
@@ -188,7 +193,8 @@ export const getSwapParams = async (
   options: {
     slippageTolerance: number;
     deadline: number;
-  } = DEFAULTS
+  } = DEFAULTS,
+  signal?: AbortSignal
 ): Promise<SwapParams> => {
   try {
     const res = await getRoute(
@@ -198,7 +204,8 @@ export const getSwapParams = async (
       inputAmount,
       recipient,
       exactOut,
-      options
+      options,
+      signal
     );
 
     const { calldata, value } = res.methodParameters;
