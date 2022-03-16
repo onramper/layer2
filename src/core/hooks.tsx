@@ -46,7 +46,9 @@ export const useAddTokenToMetamask = (
   return { addToken, success };
 };
 
-export const useEnsName = (address: string): string | null => {
+export const useEnsName = (
+  address: string | null | undefined
+): string | null => {
   const [ensName, setEnsName] = useState<string | null>(null);
   const { library } = useEthers();
 
@@ -97,13 +99,13 @@ export const useEnsAddress = (name: string) => {
   return address;
 };
 
-export const useEnsAvatar = (addressOrName: string) => {
+export const useEnsAvatar = (addressOrName: string | undefined | null) => {
   const { library } = useEthers();
   const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     const getEnsAvatar = async () => {
-      if (library) {
+      if (library && addressOrName) {
         try {
           if (!addressOrName) throw new Error('addressOrName is required');
           const res = await library.getAvatar(addressOrName);
