@@ -99,7 +99,9 @@ export const useEnsAddress = (name: string) => {
   return address;
 };
 
-export const useEnsAvatar = (addressOrName: string | undefined | null) => {
+export const useEnsAvatar = (
+  addressOrName: Array<string | undefined | null>
+) => {
   const { library } = useEthers();
   const [avatar, setAvatar] = useState<string | null>(null);
 
@@ -107,11 +109,15 @@ export const useEnsAvatar = (addressOrName: string | undefined | null) => {
     const getEnsAvatar = async () => {
       if (library && addressOrName) {
         try {
-          if (!addressOrName) throw new Error('addressOrName is required');
-          const res = await library.getAvatar(addressOrName);
-          if (res) {
-            const url = uriToHttp(res)[0];
-            setAvatar(url);
+          if (!(addressOrName.length > 0)) {
+            throw new Error('addressOrName is required');
+          } else {
+            const resArray = await Promise.all(
+              addressOrName.map(a => a && library.getAvatar(a))
+            );
+            resArray.forEach(item => {
+              if (item) setAvatar(uriToHttp(item)[0]);
+            });
           }
         } catch (error_) {
           setAvatar(null);
