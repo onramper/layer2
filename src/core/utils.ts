@@ -3,6 +3,30 @@ import { formatUnits } from '@ethersproject/units';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { MetaMaskProvider } from './models';
 import { isAddress } from '@ethersproject/address';
+import { TokenInfo } from '../tokens';
+import { NativeCurrencies } from './constants';
+
+export const isNativeToken = (token: TokenInfo): boolean => {
+  const wethResolved = resolveWeth(token);
+  const { chainId, symbol } = wethResolved;
+  const nativeForChain = NativeCurrencies.find(
+    nativeToken => nativeToken.chainId === chainId
+  );
+  if (!nativeForChain) return false;
+  if (nativeForChain.symbol === symbol) return true;
+  else return false;
+};
+
+export const resolveWeth = (token: TokenInfo) => {
+  if (token.symbol === 'WETH') {
+    return {
+      ...token,
+      symbol: 'ETH',
+    };
+  } else {
+    return token;
+  }
+};
 
 // returns formatted string for UI display
 export const formatTokenAmount = (

@@ -89,3 +89,12 @@ export class InternalError extends Error {
     this.errorCode = errorCode;
   }
 }
+
+export class NativeInputOnly extends Error {
+  constructor() {
+    super(
+      'You are only allowed to select a native token as Input at this stage'
+    );
+    this.name = 'Native Input Only';
+  }
+}

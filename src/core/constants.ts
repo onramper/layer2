@@ -1,6 +1,27 @@
 import { Mainnet, Chain, Rinkeby } from '@usedapp/core';
 import { Info } from './models';
 
+export const NATIVE_INPUT_ONLY = true; // for now we only allow ETH => ERC20
+
+export const NativeCurrencies = [
+  {
+    chainId: 1,
+    symbol: 'ETH',
+  },
+  {
+    chainId: 3,
+    symbol: 'ETH',
+  },
+  {
+    chainId: 4,
+    symbol: 'ETH',
+  },
+  {
+    chainId: 5,
+    symbol: 'ETH',
+  },
+];
+
 // No need change the address, same is for all testnets and mainnet
 export const SWAP_ROUTER_ADDRESS = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
 export const ROUTER_API =

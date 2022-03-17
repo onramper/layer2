@@ -20,6 +20,7 @@ import {
   InvalidJSONBodyError,
   InternalError,
   UnknownError,
+  NativeInputOnly,
 } from '../errors';
 import { getUniswapTokens, TokenInfo, TokenList } from '../tokens';
 import {
@@ -28,18 +29,9 @@ import {
   DEFAULTS,
   SUPPORTED_CHAINS,
   chainIdToNetwork,
+  NATIVE_INPUT_ONLY,
 } from './constants';
-
-export const resolveWeth = (token: TokenInfo) => {
-  if (token.symbol === 'WETH') {
-    return {
-      ...token,
-      symbol: 'ETH',
-    };
-  } else {
-    return token;
-  }
-};
+import { isNativeToken, resolveWeth } from './utils';
 
 export const wallets = initializeWallets(SUPPORTED_CHAINS);
 
@@ -89,6 +81,10 @@ const validateRequest = (
   const { chainId: chainIdIn } = tokenIn;
   const { chainId: chainIdOut } = tokenOut;
 
+  if (NATIVE_INPUT_ONLY && !isNativeToken(tokenIn)) {
+    throw new NativeInputOnly();
+  }
+
   if (chainIdIn !== chainIdOut) {
     throw new IncompatibleNetworkError(tokenIn, tokenOut);
   }
@@ -116,8 +112,11 @@ export const getQuote = async (
   const formattedAmount = parseEther(inputAmount.toString()).toString();
   // token symbol "WETH"=> "ETH"
   const formattedTokenIn = resolveWeth(tokenIn);
+  const tokenInAddress = isNativeToken(formattedTokenIn)
+    ? formattedTokenIn.symbol
+    : formattedTokenIn.address;
 
-  const url = `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenIn.chainId}&amount=${formattedAmount}&type=${tradeType}`;
+  const url = `${ROUTER_API}/quote?tokenInAddress=${tokenInAddress}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenIn.chainId}&amount=${formattedAmount}&type=${tradeType}`;
 
   return handleAPIRequest<QuoteDetails>(url, signal);
 };
@@ -142,9 +141,12 @@ export const getRoute = async (
   const formattedAmount = parseEther(inputAmount.toString()).toString();
   // token symbol "WETH"=> "ETH"
   const formattedTokenIn = resolveWeth(tokenIn);
+  const tokenInAddress = isNativeToken(formattedTokenIn)
+    ? formattedTokenIn.symbol
+    : formattedTokenIn.address;
 
   const { slippageTolerance, deadline } = options;
-  const url = `${ROUTER_API}/quote?tokenInAddress=${formattedTokenIn.symbol}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenOut.chainId}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`;
+  const url = `${ROUTER_API}/quote?tokenInAddress=${tokenInAddress}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenOut.chainId}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`;
 
   return handleAPIRequest<RouteDetails>(url, signal);
 };
