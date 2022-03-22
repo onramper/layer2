@@ -1,7 +1,7 @@
 import { Config, DAppProvider, useEthers } from '@usedapp/core';
 import { Interface, Fragment, JsonFragment } from '@ethersproject/abi';
 import { Contract } from '@ethersproject/contracts';
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 import { initializeWallets } from './wallets';
 import { BigNumber } from 'ethers';
 import { parseEther } from '@ethersproject/units';
@@ -32,6 +32,7 @@ import {
   NATIVE_INPUT_ONLY,
 } from './constants';
 import { isNativeToken, resolveWeth } from './utils';
+import { useConnectEnsName, useEnsAvatar } from './hooks';
 
 export const wallets = initializeWallets(SUPPORTED_CHAINS);
 
@@ -233,10 +234,39 @@ export const getTokens = async (): Promise<TokenList> => {
   }
 };
 
+interface EnsState {
+  ensName: string | null;
+  ensAvatar: string | null;
+}
+
+export const EnsContext = createContext({} as EnsState);
+
+const EnsProvider = ({ children }: ProviderProps) => {
+  const { account } = useEthers();
+  const ensName = useConnectEnsName();
+  const ensAvatar = useEnsAvatar([ensName, account]);
+  const ensPayload = {
+    ensName: ensName,
+    ensAvatar: ensAvatar,
+  };
+
+  return (
+    <EnsContext.Provider value={ensPayload}>{children}</EnsContext.Provider>
+  );
+};
+
 export const L2Provider = ({ children }: ProviderProps) => {
-  return <DAppProvider config={config}>{children}</DAppProvider>;
+  return (
+    <DAppProvider config={config}>
+      <EnsProvider>{children}</EnsProvider>
+    </DAppProvider>
+  );
 };
 
 export const useLayer2 = () => {
   return useEthers();
+};
+
+export const useEns = () => {
+  return useContext(EnsContext);
 };
