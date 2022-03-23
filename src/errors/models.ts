@@ -1,8 +1,4 @@
-import {
-  chainIdToNetwork,
-  chainIDToNetworkInfo,
-  SUPPORTED_CHAINS,
-} from '../core/constants';
+import { chainIDToNetworkInfo, SUPPORTED_CHAINS } from '../core/constants';
 import { TokenInfo } from 'src/tokens';
 
 // if (inputAmount > balance)
@@ -47,11 +43,7 @@ export class InvalidParamsError extends Error {
 export class IncompatibleNetworkError extends Error {
   constructor(tokenIn: TokenInfo, tokenOut: TokenInfo) {
     super(
-      `You can not swap across networks. Input token (${
-        tokenIn.symbol
-      }) is not on the same network as output token (${
-        tokenOut.symbol
-      }). \nBoth tokens must be one ${chainIdToNetwork[tokenIn.chainId]}`
+      `You can not swap across networks. Input token (${tokenIn.symbol}) is not on the same network as output token (${tokenOut.symbol}). \nBoth tokens must be one Network`
     );
     this.name = 'Incompatible Chain IDs';
   }

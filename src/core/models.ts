@@ -28,10 +28,11 @@ export interface WatchAssetParams {
 }
 
 export interface Info {
+  chainId: number;
   name: string;
   symbol: string;
   decimals: number;
-  wethAddress: string;
+  wethAddress?: string;
 }
 
 // generic return class we can extend for route, quote and functionParams
