@@ -33,6 +33,7 @@ import {
 } from './constants';
 import { isNativeToken, resolveWeth } from './utils';
 import { useConnectEnsName, useEnsAvatar } from './hooks';
+import { useCoingeckoPrice, useCoingeckoTokenPrice } from '@usedapp/coingecko';
 
 export const wallets = initializeWallets(SUPPORTED_CHAINS);
 
@@ -269,4 +270,23 @@ export const useLayer2 = () => {
 
 export const useEns = () => {
   return useContext(EnsContext);
+};
+
+export const useUsdPriceImpact = (
+  tokenIn: TokenInfo,
+  tokenOut: TokenInfo,
+  amountIn: number,
+  amountOut: number
+) => {
+  const tokenInPricePerUnit = useCoingeckoPrice(tokenIn.symbol, 'usd');
+  const tokenOutPricePerUnit = useCoingeckoTokenPrice(tokenOut.address, 'usd');
+
+  if (!tokenInPricePerUnit || !tokenOutPricePerUnit) {
+    return;
+  }
+
+  const tokenInPrice = Number(tokenInPricePerUnit) * amountIn;
+  const tokenOutPrice = Number(tokenOutPricePerUnit) * amountOut;
+
+  return ((tokenOutPrice - tokenInPrice) / (tokenInPrice * 100)) * 10000;
 };
