@@ -7,6 +7,8 @@ import {
   isMetaMaskProvider,
   uriToHttp,
 } from './utils';
+import { MetaMaskProvider } from './models';
+import { JsonRpcProvider } from '@ethersproject/providers';
 
 export const useAddTokenToMetamask = (
   token: TokenInfo
@@ -18,10 +20,10 @@ export const useAddTokenToMetamask = (
   const { library } = useEthers();
 
   const addToken = useCallback(() => {
-    if (library && isMetaMaskProvider(library) && token) {
+    if (library && isMetaMaskProvider(library as (MetaMaskProvider | JsonRpcProvider)) && token) {
       const { address, symbol, decimals, logoURI } = token;
       const logoURL = logoURI ? uriToHttp(logoURI)[0] : '';
-      library.provider
+      (library as (MetaMaskProvider)).provider
         .request({
           method: 'wallet_watchAsset',
           params: {
@@ -55,7 +57,7 @@ export const useEnsName = (
   useEffect(() => {
     const findName = async () => {
       if (library && address) {
-        const name = await getEnsNameFromAddress(address, library);
+        const name = await getEnsNameFromAddress(address, library as JsonRpcProvider);
         setEnsName(name);
       }
     };
@@ -72,7 +74,7 @@ export const useConnectEnsName = () => {
   useEffect(() => {
     const findName = async () => {
       if (library && account) {
-        const name = await getEnsNameFromAddress(account, library);
+        const name = await getEnsNameFromAddress(account, library as JsonRpcProvider);
         setEnsName(name);
       }
     };
@@ -89,7 +91,7 @@ export const useEnsAddress = (name: string) => {
   useEffect(() => {
     const findAddress = async () => {
       if (name && library) {
-        const ensAddress = await getAddressFromEnsName(name, library);
+        const ensAddress = await getAddressFromEnsName(name, library as JsonRpcProvider);
         ensAddress && setAddress(ensAddress);
       }
     };
