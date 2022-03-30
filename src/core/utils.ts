@@ -1,7 +1,7 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { formatUnits } from '@ethersproject/units';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { MetaMaskProvider } from './models';
+import { MetaMaskProvider, QuoteDetails, RouteDetails } from './models';
 import { isAddress } from '@ethersproject/address';
 import { TokenInfo } from '../tokens';
 import { NativeCurrencies } from './constants';
@@ -104,4 +104,11 @@ export const isMetaMaskProvider = (
   library: MetaMaskProvider | JsonRpcProvider
 ): library is MetaMaskProvider => {
   return (library as MetaMaskProvider)?.provider?.request !== undefined;
+};
+
+// a type guard to check if Route Details is valid. ie. has method params
+export const isValidRouteDetails = (
+  response: RouteDetails | QuoteDetails
+): response is RouteDetails => {
+  return (response as RouteDetails)?.methodParameters !== undefined;
 };

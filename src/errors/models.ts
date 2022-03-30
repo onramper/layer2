@@ -90,3 +90,11 @@ export class NativeInputOnly extends Error {
     this.name = 'Native Input Only';
   }
 }
+
+// if 1 or more of these args are below minimum amount, methodParams on the RouteDetails object will be undefined. while the request will return 200
+export class MinimumSlippageDeadlineError extends Error {
+  constructor() {
+    super('Either the deadline is or the slippage is set too low');
+    this.name = 'Minimum Slippage Deadline Error';
+  }
+}

@@ -21,6 +21,7 @@ import {
   InternalError,
   UnknownError,
   NativeInputOnly,
+  MinimumSlippageDeadlineError,
 } from '../errors';
 import { getUniswapTokens, TokenInfo, TokenList } from '../tokens';
 import {
@@ -31,7 +32,7 @@ import {
   chainIdToNetwork,
   NATIVE_INPUT_ONLY,
 } from './constants';
-import { isNativeToken, resolveWeth } from './utils';
+import { isNativeToken, isValidRouteDetails, resolveWeth } from './utils';
 import { useConnectEnsName, useEnsAvatar } from './hooks';
 
 export const wallets = initializeWallets(SUPPORTED_CHAINS);
@@ -56,7 +57,7 @@ async function handleAPIRequest<T>(
   return handleAPIErrors(res, formattedResponse);
 }
 
-const handleAPIErrors = (res: Response, formattedResponse: any) => {
+const handleAPIErrors = (res: Response, formattedResponse: any): never => {
   const { detail, errorCode } = formattedResponse;
   switch (res.status) {
     case 400:
@@ -210,6 +211,10 @@ export const getSwapParams = async (
       options,
       signal
     );
+
+    if (!isValidRouteDetails(res)) {
+      throw new MinimumSlippageDeadlineError();
+    }
 
     const { calldata, value } = res.methodParameters;
     return {
