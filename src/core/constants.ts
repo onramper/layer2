@@ -29,8 +29,7 @@ export const SWAP_ROUTER_ADDRESS = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
 // export const ROUTER_API =
 //   'https://a7sf9dqtif.execute-api.eu-central-1.amazonaws.com/prod';
 
-export const ROUTER_API =
-  'https://api.uniswap.org/v1';
+export const ROUTER_API = 'https://api.uniswap.org/v1';
 
 export const DEFAULTS = {
   slippageTolerance: 1, // 1%
