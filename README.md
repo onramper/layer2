@@ -9,14 +9,14 @@ Import layer2 into package using `npm link`.
 inside `layer2`:
 
 ```bash
-npm install
-npm link
-npm run start
+yarn install
+yarn link
+yarn start
 ```
 
 inside `widget/package`:
 
 ```bash
-npm link layer2
-npm run start:local
+yarn link layer2
+yarn start:local
 ```
