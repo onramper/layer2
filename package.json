@@ -15,7 +15,7 @@
     "build": "tsdx build",
     "build:browser": "tsdx build --target web --format esm --name index",
     "build:node": "tsdx build --target node --format cjs --name index",
-    "test": "tsdx test --passWithNoTests",
+    "test": "tsdx test --passWithNoTests --verbose",
     "lint": "tsdx lint",
     "prepare": "tsdx build",
     "size": "size-limit",

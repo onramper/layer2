@@ -61,7 +61,7 @@ export const uriToHttp = (uri: string): string[] => {
     case 'https':
       return [uri];
     case 'http':
-      return ['https' + uri.substr(4), uri];
+      return ['https' + uri.slice(4), uri];
     case 'ipfs':
       return [
         `https://cloudflare-ipfs.com/ipfs/${
@@ -79,7 +79,7 @@ export const uriToHttp = (uri: string): string[] => {
     case 'ar':
       return [`https://arweave.net/${uri.match(/^ar:(\/\/)?(.*)$/i)?.[2]}`];
     default:
-      return [];
+      return [uri];
   }
 };
 
