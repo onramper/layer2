@@ -25,6 +25,9 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      - name: Create env file
+        run: echo RPC_URL=${{ secrets.RPC_URL }} >> .env
+
       - name: Test
         run: yarn test --ci --coverage --maxWorkers=2
 
