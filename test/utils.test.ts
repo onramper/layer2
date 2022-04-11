@@ -11,6 +11,8 @@ import {
 import { JsonRpcProvider } from '@ethersproject/providers';
 import 'dotenv/config';
 
+const MAX_TIMEOUT = 15_000;
+
 const weth: TokenInfo = {
   name: 'Wrapped Ether',
   address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
@@ -109,7 +111,7 @@ describe('Utility functions', () => {
 
   describe('getAddressFromEnsName', () => {
     // resolving ens takes a while
-    jest.setTimeout(10000);
+    jest.setTimeout(MAX_TIMEOUT);
     it('finds an address from a name', async () => {
       const address = await getAddressFromEnsName(ensName, rpcProvider);
       expect(address).toEqual(ensAddress);
@@ -118,7 +120,7 @@ describe('Utility functions', () => {
 
   describe('getEnsNameFromAddress', () => {
     // resolving ens takes a while
-    jest.setTimeout(10000);
+    jest.setTimeout(MAX_TIMEOUT);
     it('finds a name from an address', async () => {
       const name = await getEnsNameFromAddress(ensAddress, rpcProvider);
       expect(name).toEqual(ensName);
