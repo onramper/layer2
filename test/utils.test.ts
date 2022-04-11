@@ -9,6 +9,7 @@ import {
   uriToHttp,
 } from '../src';
 import { JsonRpcProvider } from '@ethersproject/providers';
+import 'dotenv/config';
 
 const weth: TokenInfo = {
   name: 'Wrapped Ether',
@@ -42,9 +43,7 @@ const dai: TokenInfo = {
 
 const ethBalance = BigNumber.from('0x3d12391bc3404970'); // 4400642577297066352
 
-const rpcProvider = new JsonRpcProvider(
-  'https://eth-mainnet.alchemyapi.io/v2/Gb07nbsh-9IOdoizAI7nL4wcHl_8MYrt'
-);
+const rpcProvider = new JsonRpcProvider(process.env.RPC_URL);
 
 const ensName = 'wslyvh.eth';
 const ensAddress = '0x8289432ACD5EB0214B1C2526A5EDB480Aa06A9ab';
