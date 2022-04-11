@@ -1,11 +1,14 @@
 import {
   BigNumber,
   formatTokenAmount,
+  getAddressFromEnsName,
+  getEnsNameFromAddress,
   isNativeToken,
   resolveWeth,
   TokenInfo,
   uriToHttp,
 } from '../src';
+import { JsonRpcProvider } from '@ethersproject/providers';
 
 const weth: TokenInfo = {
   name: 'Wrapped Ether',
@@ -38,6 +41,13 @@ const dai: TokenInfo = {
 };
 
 const ethBalance = BigNumber.from('0x3d12391bc3404970'); // 4400642577297066352
+
+const rpcProvider = new JsonRpcProvider(
+  'https://eth-mainnet.alchemyapi.io/v2/Gb07nbsh-9IOdoizAI7nL4wcHl_8MYrt'
+);
+
+const ensName = 'wslyvh.eth';
+const ensAddress = '0x8289432ACD5EB0214B1C2526A5EDB480Aa06A9ab';
 
 describe('Utility functions', () => {
   describe('isNativeToken', () => {
@@ -95,6 +105,24 @@ describe('Utility functions', () => {
         'https://assets.coingecko.com/coins/images/11224/thumb/tBTC.png?1589620754',
         'http://assets.coingecko.com/coins/images/11224/thumb/tBTC.png?1589620754',
       ]);
+    });
+  });
+
+  describe('getAddressFromEnsName', () => {
+    // resolving ens takes a while
+    jest.setTimeout(10000);
+    it('finds an address from a name', async () => {
+      const address = await getAddressFromEnsName(ensName, rpcProvider);
+      expect(address).toEqual(ensAddress);
+    });
+  });
+
+  describe('getEnsNameFromAddress', () => {
+    // resolving ens takes a while
+    jest.setTimeout(10000);
+    it('finds a name from an address', async () => {
+      const name = await getEnsNameFromAddress(ensAddress, rpcProvider);
+      expect(name).toEqual(ensName);
     });
   });
 });
