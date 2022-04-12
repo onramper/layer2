@@ -11,6 +11,8 @@ import {
 import { JsonRpcProvider } from '@ethersproject/providers';
 import 'dotenv/config';
 
+// DEFINE CONSTANTS
+
 const MAX_TIMEOUT = 15_000;
 
 const weth: TokenInfo = {
@@ -47,8 +49,11 @@ const ethBalance = BigNumber.from('0x3d12391bc3404970'); // 4400642577297066352
 
 const rpcProvider = new JsonRpcProvider(process.env.RPC_URL);
 
+// SOME KNOWN ENS CREDENTIALS ON MAINNET
 const ensName = 'wslyvh.eth';
 const ensAddress = '0x8289432ACD5EB0214B1C2526A5EDB480Aa06A9ab';
+
+// TESTS
 
 describe('Utility functions', () => {
   describe('isNativeToken', () => {
@@ -127,3 +132,5 @@ describe('Utility functions', () => {
     });
   });
 });
+
+// test('dummy test', () => expect(true).toBe(true));
