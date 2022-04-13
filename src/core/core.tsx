@@ -23,7 +23,7 @@ import {
   NativeInputOnly,
   MinimumSlippageDeadlineError,
 } from '../errors';
-import { getUniswapTokens, TokenInfo, TokenList } from '../tokens';
+import { TokenInfo } from '../tokens';
 import {
   SWAP_ROUTER_ADDRESS,
   ROUTER_API,
@@ -238,16 +238,6 @@ export const getSwapParams = async (
   } catch (error) {
     // re-throw errors
     throw error;
-  }
-};
-
-export const getTokens = async (): Promise<TokenList> => {
-  const res = await getUniswapTokens();
-  if (res.ok) {
-    const formattedResponse = await res.json();
-    return formattedResponse as TokenList;
-  } else {
-    throw new Error('Unable to fetch tokens');
   }
 };
 
