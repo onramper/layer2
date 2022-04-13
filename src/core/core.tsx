@@ -82,7 +82,7 @@ const handleAPIErrors = (res: Response, formattedResponse: any): never => {
   }
 };
 
-const validateRequest = (
+export const validateRequest = (
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
   amount?: number,

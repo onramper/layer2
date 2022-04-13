@@ -2,6 +2,11 @@ import {
   blockExplorerAddressLink,
   blockExplorerTransactionLink,
   getQuote,
+  IncompatibleNetworkError,
+  InsufficientFundsError,
+  UnsupportedNetworkError,
+  // NativeInputOnly,
+  validateRequest,
 } from '../src';
 import { quoteResponse } from './mocks/responses';
 
@@ -44,11 +49,55 @@ describe('blockExplorerTransactionLink', () => {
   });
 });
 
+describe('validateRequest', () => {
+  it('throws NativeInputOnly error', () => {
+    expect(() => validateRequest(uni, weth)).toThrow(
+      'You are only allowed to select a native token as Input at this stage'
+    );
+  });
+
+  it('throws IncompatibleNetworkError error', () => {
+    const expectedError = new IncompatibleNetworkError(weth, {
+      ...uni,
+      chainId: 1,
+    });
+    expect(() => validateRequest(weth, { ...uni, chainId: 1 })).toThrow(
+      expectedError.message
+    );
+  });
+
+  it('throws UnsupportedNetworkError error', () => {
+    const expectedError = new UnsupportedNetworkError();
+    expect(() =>
+      validateRequest({ ...weth, chainId: 5 }, { ...uni, chainId: 5 })
+    ).toThrow(expectedError.message);
+  });
+
+  it('throws InsufficientFundsError error', () => {
+    const expectedError = new InsufficientFundsError(weth.symbol);
+    expect(() => validateRequest(weth, uni, 100, 50)).toThrow(
+      expectedError.message
+    );
+  });
+});
+
 // ASYNCHRONOUS FUNCTIONS
 
 describe('getQuote', () => {
   it('returns correct data', async () => {
     const res = await getQuote(weth, uni, 0.1, false, API_KEY);
     expect(res).toEqual(quoteResponse);
+  });
+
+  it('throws errors if inputs are invalid', async () => {
+    await expect(
+      getQuote(
+        { ...weth, chainId: 5 },
+        { ...uni, chainId: 5 },
+        0.1,
+        false,
+        API_KEY
+      )
+    ).rejects.toThrowError();
   });
 });
