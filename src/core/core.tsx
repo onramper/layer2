@@ -45,7 +45,7 @@ export const config: Config = {
   },
 };
 
-async function handleAPIRequest<T>(
+export async function handleAPIRequest<T>(
   url: string,
   apiKey: string,
   signal?: AbortSignal
