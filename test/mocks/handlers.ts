@@ -1,19 +1,25 @@
 import { rest } from 'msw';
 import { ROUTER_API } from '../../src';
-import { quoteResponse } from './responses';
-
-// const validTokenInAddress = '0xc778417E063141139Fce010982780140Aa0cD5Ab';
+import { quoteResponse, routeResponse } from './responses';
 
 export const handlers = [
-  // HAPPY PATH
-  rest.get(`${ROUTER_API}/quote`, (_, res, ctx) => {
-    return res(ctx.status(200), ctx.json(quoteResponse));
+  // HAPPY PATHS
+  rest.get(`${ROUTER_API}/quote`, (req, res, ctx) => {
+    const slippageTolerance = req.url.searchParams.get('slippageTolerance');
+    const deadline = req.url.searchParams.get('deadline');
+    const recipient = req.url.searchParams.get('recipient');
+
+    if (Number(slippageTolerance) > 0 && Number(deadline) > 0 && recipient) {
+      return res(ctx.status(200), ctx.json(routeResponse));
+      // api will still return 200, but the response will not include methodParams, ie. just a quote
+    } else {
+      return res(ctx.status(200), ctx.json(quoteResponse));
+    }
   }),
 
   // SAD PATHS - (dummy urls, to test handling of known quote API errors)
-
   rest.get('api400', (req, res, ctx) => {
-    const { invalidAddress } = req.params;
+    const invalidAddress = req.url.searchParams.get('invalidAddress');
     return res(
       ctx.status(400),
       ctx.json({

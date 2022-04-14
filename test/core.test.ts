@@ -12,8 +12,10 @@ import {
   InvalidJSONBodyError,
   InternalError,
   UnknownError,
+  getRoute,
+  DEFAULTS,
 } from '../src';
-import { quoteResponse } from './mocks/responses';
+import { quoteResponse, routeResponse } from './mocks/responses';
 
 // DEFINE CONSTANTS
 const API_KEY = '1234';
@@ -90,7 +92,7 @@ describe('validateRequest', () => {
 // ASYNCHRONOUS FUNCTIONS
 
 describe('getQuote', () => {
-  it('returns correct data', async () => {
+  it('returns QUOTE response when swap params are missing', async () => {
     const res = await getQuote(weth, uni, 0.1, false, API_KEY);
     expect(res).toEqual(quoteResponse);
   });
@@ -102,6 +104,36 @@ describe('getQuote', () => {
         { ...uni, chainId: 5 },
         0.1,
         false,
+        API_KEY
+      )
+    ).rejects.toThrowError();
+  });
+});
+
+describe('getRoute', () => {
+  it('returns ROUTE response when swap params are included', async () => {
+    const res = await getRoute(
+      100,
+      weth,
+      uni,
+      0.02,
+      USER_WALLET,
+      false,
+      DEFAULTS,
+      API_KEY
+    );
+    expect(res).toEqual(routeResponse);
+  });
+  it('throws error when inputs are invalid', async () => {
+    await expect(
+      getRoute(
+        100,
+        { ...weth, chainId: 5 },
+        { ...uni, chainId: 5 },
+        0.02,
+        USER_WALLET,
+        false,
+        DEFAULTS,
         API_KEY
       )
     ).rejects.toThrowError();

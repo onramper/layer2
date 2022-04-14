@@ -110,7 +110,7 @@ describe('Utility functions', () => {
     });
   });
 
-  describe('getAddressFromEnsName', () => {
+  describe('Ens Resolvers', () => {
     const name = 'test.eth';
 
     beforeAll(async () => {
@@ -123,12 +123,12 @@ describe('Utility functions', () => {
       }
     });
 
-    it('finds an address from a name', async () => {
+    it('"getAddressFromEnsName" finds an address from a name', async () => {
       const address = await getAddressFromEnsName(name, mockProvider);
       expect(address).toEqual(wallet.address);
     });
 
-    it('finds a name from an address', async () => {
+    it('"getEnsNameFromAddress" finds a name from an address', async () => {
       const ensName = await getEnsNameFromAddress(wallet.address, mockProvider);
       expect(ensName).toEqual(name);
     });
