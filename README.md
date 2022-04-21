@@ -220,3 +220,28 @@ const address = useEnsAvatar([name, address]); // >> <string | null>
 
 // this hook wil attempt to resolve each item in the array until it finds something
 ```
+
+- addTokenToMetamask
+
+**Usage**
+
+```typescript
+
+const token = {
+    name: "Dai Stablecoin",
+    address: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+    symbol: "DAI",
+    decimals: 18,
+    chainId: 1,
+    logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png"
+}
+const { addToken, success } useAddTokenToMetamask(token);
+
+
+return (
+<button onClick={addToken}>
+    add DAI to wallet
+</button>
+{success && <p>Success!! 🥳</p>}
+)
+```
