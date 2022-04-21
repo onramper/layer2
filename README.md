@@ -239,9 +239,32 @@ const { addToken, success } useAddTokenToMetamask(token);
 
 
 return (
-<button onClick={addToken}>
-    add DAI to wallet
-</button>
-{success && <p>Success!! 🥳</p>}
+    <>
+        <button onClick={addToken}>
+            add DAI to wallet
+        </button>
+        {success && <p>Success!! 🥳</p>}
+    </>
+
 )
+```
+
+## Utils
+
+- uriToHttp
+
+> Since many assets in the web3 ecosystem are stored on ipfs/ arweave or other distributed storage solutions, we would like to convert any URLs using such protocols to one using https so that we may reliably retrieve said asset from all browsers. (not everyone has ipfs support set up in their browser)
+
+**Usage**
+
+```typescript
+import { uriToHttp } from 'layer2';
+
+const httpsArray = uriToHttp(
+  'ipfs://QmNa8mQkrNKp1WEEeGjFezDmDeodkWRevGFN8JCV7b4Xir'
+);
+
+console.log(httpsArray[0]);
+
+// https://cloudflare-ipfs.com/ipfs/QmNa8mQkrNKp1WEEeGjFezDmDeodkWRevGFN8JCV7b4Xir/
 ```
