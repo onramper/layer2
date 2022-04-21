@@ -44,7 +44,7 @@ yarn add @onramper/layer2#main
 
 ## Usage
 
-### First steps
+### How to: Get a quote & perform Transaction
 
 1. Wrap your application with the Layer2Provider.
 
@@ -119,7 +119,7 @@ const App = ()=> {
           tokenIn,
           tokenOut,
           amount,
-          account,
+          account, // or specify custom receiver address
           false,
           {
             1, // 1%
@@ -130,13 +130,14 @@ const App = ()=> {
 
 // Returns
 // >>
-// interface RouteDetails extends QuoteDetails {
-//   methodParameters: {
-//     calldata: string; // long hexString
-//     value: string; // 0x00
-//   };
+interface SwapParams {
+  data: string; // route.methodParameters.calldata,
+  to: string; //  V3_SWAP_ROUTER_ADDRESS,
+  value: BigNumber; // BigNumber.from(route.methodParameters.value),
+  gasPrice: BigNumber; // this we can choose not to pass to user's wallet, the wallet make a more recent estimate anyway
+}
 
-//   Now we can send the transaction with calldata
+//   Take what we need from the response and submit the transaction
     const {data, to, value } = res;
 
  sendTransaction({
@@ -145,6 +146,8 @@ const App = ()=> {
             value: value,
             from: receiverAddress,
           });
+
+    // we can also track the current status of the transaction in the UI.
     return (
         <div>
             {state.status === "Mining" && (<p>Transaction pending...</p>)}
@@ -153,7 +156,67 @@ const App = ()=> {
 
     )
 
+```
+
+## Other Useful things
+
+### Hooks/Context
+
+1. EnsContext
+
+> Since many users might connect a wallet that has either an ens name or an ens avatar registered to it, we would like to show this to the user. The items returned by the context are _only_ relevant to the wallet currently connected to the dApp.
+
+**Usage**
+
+```typescript
+import {shortenIfAddress, useEns, useLayer2} from "layer2"
+
+const App = ()=> {
+  const { ensName, ensAvatar } = useEns(); // >> <string | null>
+  const { account } = useLayer2();
+
+  return (
+    <p>Your wallet: {ensName ?? shortenIfAddress(account)} </p>
+    {ensAvatar && <img src={ensAvatar} alt="avatar image" />}
+  )
+
+  // Your wallet: vitalik.eth   or 0xC54...5a48
+  // 🤖  or [nothing]
 }
 
 
+```
+
+2. Inidividual ENS hooks
+
+> There are hooks that resolve for ens that we might want to use for wallets _other_ that the one connected to the dAPP.
+
+- useEnsName
+
+**Usage**
+
+```typescript
+const address = '0xC54070dA79E7E3e2c95D3a91fe98A42000e65a48';
+const name = useEnsName(address); // >> <string | null>
+```
+
+- useEnsAddress
+
+**Usage**
+
+```typescript
+const name = 'vitalik.eth';
+const address = useEnsAddress(name); // >> <string | null>
+```
+
+- useEnsAvatar
+
+**Usage**
+
+```typescript
+const name = 'vitalik.eth';
+const address = '0xC54070dA79E7E3e2c95D3a91fe98A42000e65a48';
+const address = useEnsAvatar([name, address]); // >> <string | null>
+
+// this hook wil attempt to resolve each item in the array until it finds something
 ```
