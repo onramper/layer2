@@ -1,6 +1,4 @@
 import {
-  blockExplorerAddressLink,
-  blockExplorerTransactionLink,
   getQuote,
   IncompatibleNetworkError,
   InsufficientFundsError,
@@ -19,10 +17,7 @@ import { quoteResponse, routeResponse } from './mocks/responses';
 
 // DEFINE CONSTANTS
 const API_KEY = '1234';
-const CHAIN_ID = 1;
 const USER_WALLET = '0xC54070dA79E7E3e2c95D3a91fe98A42000e65a48';
-const TX_HASH =
-  '0x4ae403ad01bee9a3192cede2d2ac2e398775ca7b145af8cad86a139fd507fee8';
 
 const weth = {
   name: 'Wrapped Ether',
