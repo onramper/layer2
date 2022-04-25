@@ -43,19 +43,6 @@ const uni = {
 };
 
 // SYNCHRONOUS FUNCTIONS
-describe('blockExplorerAddressLink', () => {
-  it('returns a usable link from chainID and address', () => {
-    const link = blockExplorerAddressLink(CHAIN_ID, USER_WALLET);
-    expect(typeof link).toBe('string');
-  });
-});
-
-describe('blockExplorerTransactionLink', () => {
-  it('returns a usable link from chainID and transaction hash', () => {
-    const link = blockExplorerTransactionLink(CHAIN_ID, TX_HASH);
-    expect(typeof link).toBe('string');
-  });
-});
 
 describe('validateRequest', () => {
   it('throws NativeInputOnly error', () => {
