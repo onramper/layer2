@@ -52,8 +52,8 @@ export class IncompatibleNetworkError extends Error {
 export class UnsupportedNetworkError extends Error {
   constructor() {
     super(
-      `Unsupported Network! \nLayer2 transactions only supported on the following networks: ${SUPPORTED_CHAINS.forEach(
-        id => chainIDToNetworkInfo[id]?.name ?? ''
+      `Unsupported Network! \nLayer2 transactions only supported on the following networks: ${SUPPORTED_CHAINS.find(
+        id => chainIDToNetworkInfo[id]?.name
       )}`
     );
     this.name = 'Unsupported Network';
