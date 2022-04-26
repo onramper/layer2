@@ -2,14 +2,9 @@ import {
   getQuote,
   IncompatibleNetworkError,
   InsufficientFundsError,
-  InvalidParamsError,
   UnsupportedNetworkError,
   handleAPIRequest,
   validateRequest,
-  APIErrorPayload,
-  InvalidJSONBodyError,
-  InternalError,
-  UnknownError,
   getRoute,
   DEFAULTS,
 } from '../src';
@@ -125,43 +120,27 @@ describe('getRoute', () => {
 describe('handleApiErrors', () => {
   it('throws InvalidParamsError when API returns 400', async () => {
     const invalidAddress = '0xC54070dA79E7E3e2c95D3a91fe98A42000e65a48';
-    const expectedError = new InvalidParamsError({
-      detail: `Could not find token with address "${invalidAddress}"`,
-      errorCode: 'TOKEN_IN_INVALID',
-    });
 
     await expect(
       handleAPIRequest(`api400?invalidAddress=${invalidAddress}`, API_KEY)
-    ).rejects.toThrow(expectedError.message);
+    ).rejects.toThrow('Invalid arguments');
   });
 
   it('throws InvalidJSONBodyError when API returns 422', async () => {
-    const expectedError = new InvalidJSONBodyError({
-      detail: 'Invalid JSON body',
-      errorCode: 'VALIDATION_ERROR',
-    } as APIErrorPayload);
-
     await expect(handleAPIRequest('api422', API_KEY)).rejects.toThrow(
-      expectedError.message
+      'Invalid JSON Body'
     );
   });
 
   it('throws InternalError when API returns 500', async () => {
-    const expectedError = new InternalError({
-      errorCode: 'INTERNAL_ERROR',
-      detail: 'Unexpected error',
-    } as APIErrorPayload);
-
     await expect(handleAPIRequest('api500', API_KEY)).rejects.toThrow(
-      expectedError.message
+      'Unexpected Internal error'
     );
   });
 
   it('throws UnknownError when API returns unrecognized status code', async () => {
-    const expectedError = new UnknownError();
-
     await expect(handleAPIRequest('api300', API_KEY)).rejects.toThrow(
-      expectedError.message
+      'Unknown Error'
     );
   });
 });
