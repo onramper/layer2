@@ -1,4 +1,4 @@
-import { Mainnet, Chain, Rinkeby } from '@usedapp/core';
+import { Mainnet, Chain, Rinkeby, Ropsten, Goerli } from '@usedapp/core';
 import { Info } from './models';
 
 export const NATIVE_INPUT_ONLY = true; // for now we only allow ETH => ERC20
@@ -33,11 +33,13 @@ export const DEFAULTS = {
   deadline: 200, // 200 seconds
 };
 
-export const SUPPORTED_CHAINS = [1, 4];
+export const SUPPORTED_CHAINS = [1, 3, 4, 5];
 
 export const chainIdToNetwork: { [key: number]: Chain } = {
   1: Mainnet,
+  3: Ropsten,
   4: Rinkeby,
+  5: Goerli,
 };
 
 export const knownWethAddresses = [
