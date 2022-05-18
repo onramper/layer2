@@ -91,16 +91,16 @@ export const validateRequest = (
   const { chainId: chainIdIn } = tokenIn;
   const { chainId: chainIdOut } = tokenOut;
 
-  if (NATIVE_INPUT_ONLY && !isNativeToken(tokenIn)) {
-    throw new NativeInputOnly();
-  }
-
   if (chainIdIn !== chainIdOut) {
     throw new IncompatibleNetworkError(tokenIn, tokenOut);
   }
 
   if (!SUPPORTED_CHAINS.includes(chainIdIn)) {
     throw new UnsupportedNetworkError();
+  }
+
+  if (NATIVE_INPUT_ONLY && !isNativeToken(tokenIn)) {
+    throw new NativeInputOnly();
   }
 
   if (balance && amount && amount > balance) {

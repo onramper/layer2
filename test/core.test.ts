@@ -19,7 +19,7 @@ const weth = {
   address: '0xc778417E063141139Fce010982780140Aa0cD5Ab',
   symbol: 'WETH',
   decimals: 18,
-  chainId: 4,
+  chainId: 5,
   logoURI:
     'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
 };
@@ -28,7 +28,7 @@ const uni = {
   address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
   symbol: 'UNI',
   decimals: 18,
-  chainId: 4,
+  chainId: 5,
   logoURI: 'ipfs://QmXttGpZrECX5qCyXbBQiqgQNytVGeZW5Anewvh2jc4psg',
 };
 
@@ -54,7 +54,7 @@ describe('validateRequest', () => {
   it('throws UnsupportedNetworkError error', () => {
     const expectedError = new UnsupportedNetworkError();
     expect(() =>
-      validateRequest({ ...weth, chainId: 5 }, { ...uni, chainId: 5 })
+      validateRequest({ ...weth, chainId: 999 }, { ...uni, chainId: 999 })
     ).toThrow(expectedError.message);
   });
 
@@ -77,8 +77,8 @@ describe('getQuote', () => {
   it('throws errors if inputs are invalid', async () => {
     await expect(
       getQuote(
-        { ...weth, chainId: 5 },
-        { ...uni, chainId: 5 },
+        { ...weth, chainId: 999 },
+        { ...uni, chainId: 999 },
         0.1,
         false,
         API_KEY
@@ -105,8 +105,8 @@ describe('getRoute', () => {
     await expect(
       getRoute(
         100,
-        { ...weth, chainId: 5 },
-        { ...uni, chainId: 5 },
+        { ...weth, chainId: 999 },
+        { ...uni, chainId: 999 },
         0.02,
         USER_WALLET,
         false,
