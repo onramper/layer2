@@ -51,9 +51,7 @@
   ],
   "devDependencies": {
     "@ethereum-waffle/provider": "^3.4.4",
-    "@ethersproject/address": "^5.6.0",
     "@ethersproject/providers": "^5.6.3",
-    "@ethersproject/units": "^5.6.0",
     "@size-limit/preset-small-lib": "^7.0.8",
     "@types/react": "^18.0.3",
     "@types/react-dom": "^18.0.0",
@@ -68,6 +66,9 @@
     "whatwg-fetch": "^3.6.2"
   },
   "dependencies": {
+    "@ethersproject/address": "^5.6.0",
+    "@ethersproject/bignumber": "^5.6.0",
+    "@ethersproject/units": "^5.6.0",
     "@usedapp/core": "^0.12.9",
     "@web3-react/abstract-connector": "^6.0.7",
     "@web3-react/injected-connector": "^6.0.7"

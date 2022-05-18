@@ -1,4 +1,4 @@
-# Onramper-Layer2 Package
+# Onramper - Layer2 SDK
 
 This package serves as a library that can be published to npm and imported into `widget/package` to provide the necessary logic to perform swaps from Native Currency to any other token provided it is supported by the dex in questions.
 
@@ -48,7 +48,7 @@ yarn add @onramper/layer2#main
 
 1. Wrap your application with the Layer2Provider.
 
-```typescript
+```typescript=
 import { L2Provider } from 'layer2';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -67,7 +67,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 > If a user does not have their wallet ocnnected we can still fetch quote data. (`<QuoteResult>` returned by `getQuote()` does not contain `calldata` necessary to perform a swap, only quote data for display purposes).
 
-```typescript
+```typescript=
 const { getQuote } from "layer2";
 
  const newQuote = await getQuote(
@@ -81,30 +81,30 @@ const { getQuote } from "layer2";
 
 // Returns
 // >>
-//  interface QuoteDetails {
-//   blockNumber: string;
-//   amount: string;
-//   amountDecimals: string;
-//   quote: string;
-//   quoteDecimals: string;
-//   quoteGasAdjusted: string;
-//   quoteGasAdjustedDecimals: string;
-//   gasUseEstimateQuote: string;
-//   gasUseEstimateQuoteDecimals: string;
-//   gasUseEstimate: string;
-//   gasUseEstimateUSD: string;
-//   gasPriceWei: string;
-//   route: any[][];
-//   routeString: string;
-//   quoteId: string;
-// }
+ interface QuoteDetails {
+  blockNumber: string;
+  amount: string;
+  amountDecimals: string;
+  quote: string;
+  quoteDecimals: string;
+  quoteGasAdjusted: string;
+  quoteGasAdjustedDecimals: string;
+  gasUseEstimateQuote: string;
+  gasUseEstimateQuoteDecimals: string;
+  gasUseEstimate: string;
+  gasUseEstimateUSD: string;
+  gasPriceWei: string;
+  route: any[][];
+  routeString: string;
+  quoteId: string;
+}
 ```
 
 3. Get Swap Params
 
 > If a user has connected their wallet, we have all the data needed by the quote api to return to us the `calldata` necessary to perform a swap.
 
-```typescript
+```typescript=
 const { getSwapParams, useSendTransaction, useLayer2, formatEther } from "layer2";
 
 
@@ -168,7 +168,7 @@ interface SwapParams {
 
 **Usage**
 
-```typescript
+```typescript=
 import {shortenIfAddress, useEns, useLayer2} from "layer2"
 
 const App = ()=> {
@@ -195,7 +195,7 @@ const App = ()=> {
 
 **Usage**
 
-```typescript
+```typescript=
 const address = '0xC54070dA79E7E3e2c95D3a91fe98A42000e65a48';
 const name = useEnsName(address); // >> <string | null>
 ```
@@ -204,7 +204,7 @@ const name = useEnsName(address); // >> <string | null>
 
 **Usage**
 
-```typescript
+```typescript=
 const name = 'vitalik.eth';
 const address = useEnsAddress(name); // >> <string | null>
 ```
@@ -213,7 +213,7 @@ const address = useEnsAddress(name); // >> <string | null>
 
 **Usage**
 
-```typescript
+```typescript=
 const name = 'vitalik.eth';
 const address = '0xC54070dA79E7E3e2c95D3a91fe98A42000e65a48';
 const address = useEnsAvatar([name, address]); // >> <string | null>
@@ -225,7 +225,7 @@ const address = useEnsAvatar([name, address]); // >> <string | null>
 
 **Usage**
 
-```typescript
+```typescript=
 
 const token = {
     name: "Dai Stablecoin",
@@ -257,7 +257,7 @@ return (
 
 **Usage**
 
-```typescript
+```typescript=
 import { uriToHttp } from 'layer2';
 
 const httpsArray = uriToHttp(
@@ -267,4 +267,33 @@ const httpsArray = uriToHttp(
 console.log(httpsArray[0]);
 
 // https://cloudflare-ipfs.com/ipfs/QmNa8mQkrNKp1WEEeGjFezDmDeodkWRevGFN8JCV7b4Xir/
+```
+
+## Tests
+
+**Stack**
+
+- [Jest](https://jestjs.io/)
+- [msw.js](https://mswjs.io/)
+- [@ethereum-waffle/provider](https://ethereum-waffle.readthedocs.io/en/latest/basic-testing.html)
+
+**Coverage**
+
+Coverage is collected from the following files:
+
+- src/core/core.tsx
+- src/core/utils.ts
+
+All [Quote API](https://github.com/onramper/routing-api) routes are mocked using _mock service worker_ inside `test/mocks/handlers.ts`.
+
+There are, however some caveats to this:
+
+- "Happy paths" are accurately mocked. ie. the mock servcie worker will behave _exactly_ like the actual API if conditions for success are met.
+
+- "Unhappy paths" are **not** accurately mocked as this would require implementing all the API logic again in this repo just for the sake of testing. Furthermore, this would be pretty pointless anyway since the purpose of _these_ tests are not to test how the API responds, but instead are meant to test how this SDK _handles_ those responses.
+
+To run the tests locally, fromt eh root folder, run:
+
+```shell
+yarn test
 ```
