@@ -1,5 +1,4 @@
 import {
-  BigNumber,
   formatTokenAmount,
   getAddressFromEnsName,
   getEnsNameFromAddress,
@@ -9,6 +8,7 @@ import {
   uriToHttp,
 } from '../src';
 import { MockProvider } from '@ethereum-waffle/provider';
+import { BigNumber } from 'ethers';
 
 // DEFINE CONSTANTS
 
@@ -43,8 +43,6 @@ const dai: TokenInfo = {
 };
 
 const ethBalance = BigNumber.from('0x3d12391bc3404970'); // 4400642577297066352
-
-// SOME KNOWN ENS CREDENTIALS ON MAINNET
 
 const mockProvider = new MockProvider();
 const [wallet] = mockProvider.getWallets();

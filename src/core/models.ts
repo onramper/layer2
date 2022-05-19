@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
-import { BigNumber } from 'ethers';
-import { JsonRpcProvider } from '@ethersproject/providers';
+import { BigNumber, providers } from 'ethers';
 
 export interface SwapParams {
   data: string; // route.methodParameters.calldata,
@@ -92,7 +91,7 @@ export interface RouteDetails extends QuoteDetails {
   };
 }
 
-export interface MetaMaskProvider extends JsonRpcProvider {
+export interface MetaMaskProvider extends providers.JsonRpcProvider {
   provider: {
     request: (params: WatchAssetParams) => Promise<boolean>;
   };

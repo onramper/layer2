@@ -1,10 +1,8 @@
 import { Config, DAppProvider, useEthers } from '@usedapp/core';
-import { Interface, Fragment, JsonFragment } from '@ethersproject/abi';
-import { Contract } from '@ethersproject/contracts';
+import { utils } from 'ethers';
 import React, { createContext, useContext } from 'react';
 import { initializeWallets } from './wallets';
 import { BigNumber } from 'ethers';
-import { parseEther } from '@ethersproject/units';
 import {
   SwapParams,
   ProviderProps,
@@ -120,7 +118,7 @@ export const getQuote = async (
 
   const tradeType = exactOut ? 'exactOut' : 'exactIn';
 
-  const formattedAmount = parseEther(inputAmount.toString()).toString();
+  const formattedAmount = utils.parseEther(inputAmount.toString()).toString();
   // token symbol "WETH"=> "ETH"
   const formattedTokenIn = resolveWeth(tokenIn);
   const tokenInAddress = isNativeToken(formattedTokenIn)
@@ -150,7 +148,7 @@ export const getRoute = async (
 
   const tradeType = exactOut ? 'exactOut' : 'exactIn';
 
-  const formattedAmount = parseEther(inputAmount.toString()).toString();
+  const formattedAmount = utils.parseEther(inputAmount.toString()).toString();
   // token symbol "WETH"=> "ETH"
   const formattedTokenIn = resolveWeth(tokenIn);
   const tokenInAddress = isNativeToken(formattedTokenIn)
@@ -177,24 +175,6 @@ export const blockExplorerTransactionLink = (
   transactionHash: string
 ): string | undefined => {
   return chainIdToNetwork[chainID].getExplorerTransactionLink(transactionHash);
-};
-
-// pass in [JSON].abi
-export const loadInterface = (
-  abi: string | ReadonlyArray<Fragment | JsonFragment | string>
-): Interface => {
-  return new Interface(abi);
-};
-
-// pass in [JSON].abi & address
-export const loadContract = (
-  abi: string | ReadonlyArray<Fragment | JsonFragment | string>,
-  address: string
-): Contract => {
-  const contractInterface = loadInterface(abi);
-  const contract = new Contract(address, contractInterface);
-
-  return contract;
 };
 
 export const getSwapParams = async (

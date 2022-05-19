@@ -1,10 +1,7 @@
-import { BigNumber } from '@ethersproject/bignumber';
-import { formatUnits } from '@ethersproject/units';
-import { JsonRpcProvider } from '@ethersproject/providers';
 import { MetaMaskProvider, QuoteDetails, RouteDetails } from './models';
-import { isAddress } from '@ethersproject/address';
 import { TokenInfo } from '../tokens';
 import { NativeCurrencies } from './constants';
+import { utils, BigNumber } from 'ethers';
 
 export const isNativeToken = (token: TokenInfo): boolean => {
   const wethResolved = resolveWeth(token);
@@ -33,7 +30,7 @@ export const formatTokenAmount = (
   decimals: number,
   amount: BigNumber
 ): string => {
-  return amount ? formatUnits(amount, decimals) : '0.00';
+  return amount ? utils.formatUnits(amount, decimals) : '0.00';
 };
 
 // returns "0x" padded hex of chain ID
@@ -83,25 +80,19 @@ export const uriToHttp = (uri: string): string[] => {
   }
 };
 
-export const getAddressFromEnsName = (
-  ensName: string,
-  library: JsonRpcProvider
-) => {
+export const getAddressFromEnsName = (ensName: string, library: any) => {
   return library.resolveName(ensName);
 };
 
-export const getEnsNameFromAddress = (
-  address: string,
-  library: JsonRpcProvider
-) => {
-  if (isAddress(address)) {
+export const getEnsNameFromAddress = (address: string, library: any) => {
+  if (utils.isAddress(address)) {
     return library.lookupAddress(address);
   } else return null;
 };
 
 // a type guard for MM specific methods/properties
 export const isMetaMaskProvider = (
-  library: MetaMaskProvider | JsonRpcProvider
+  library: any
 ): library is MetaMaskProvider => {
   return (library as MetaMaskProvider)?.provider?.request !== undefined;
 };
