@@ -1,7 +1,7 @@
 import { MetaMaskProvider, QuoteDetails, RouteDetails } from './models';
 import { TokenInfo } from '../tokens';
 import { NativeCurrencies } from './constants';
-import { utils, BigNumber } from 'ethers';
+import { utils, BigNumber, providers } from 'ethers';
 
 export const isNativeToken = (token: TokenInfo): boolean => {
   const wethResolved = resolveWeth(token);
@@ -80,11 +80,17 @@ export const uriToHttp = (uri: string): string[] => {
   }
 };
 
-export const getAddressFromEnsName = (ensName: string, library: any) => {
+export const getAddressFromEnsName = (
+  ensName: string,
+  library: providers.JsonRpcProvider
+) => {
   return library.resolveName(ensName);
 };
 
-export const getEnsNameFromAddress = (address: string, library: any) => {
+export const getEnsNameFromAddress = (
+  address: string,
+  library: providers.JsonRpcProvider
+) => {
   if (utils.isAddress(address)) {
     return library.lookupAddress(address);
   } else return null;
@@ -92,7 +98,7 @@ export const getEnsNameFromAddress = (address: string, library: any) => {
 
 // a type guard for MM specific methods/properties
 export const isMetaMaskProvider = (
-  library: any
+  library: providers.JsonRpcProvider | MetaMaskProvider
 ): library is MetaMaskProvider => {
   return (library as MetaMaskProvider)?.provider?.request !== undefined;
 };
