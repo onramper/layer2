@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { BigNumber } from 'ethers';
+import { BigNumber } from '@ethersproject/bignumber';
 import { JsonRpcProvider } from '@ethersproject/providers';
 
 export interface SwapParams {

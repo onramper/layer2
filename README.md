@@ -5,9 +5,7 @@ This package serves as a library that can be published to npm and imported into 
 ## Dependencies included in the bundle
 
 - [@usedapp/core](https://github.com/TrueFiEng/useDApp/)
-- [@ethersproject/units](https://www.npmjs.com/package/@ethersproject/units)
-- [@ethersproject/address](https://www.npmjs.com/package/@ethersproject/address)
-- [@ethersproject/bignumber](https://www.npmjs.com/package/@ethersproject/bignumber)
+  \_ [ethers](https://github.com/ethers-io/ethers.js)
 
 ### Dexs implemented to date
 
