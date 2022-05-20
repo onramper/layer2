@@ -2,7 +2,7 @@ import { Config, DAppProvider, useEthers } from '@usedapp/core';
 import { utils } from 'ethers';
 import React, { createContext, useContext } from 'react';
 import { initializeWallets } from './wallets';
-import { BigNumber } from 'ethers';
+import { BigNumber } from '@ethersproject/bignumber';
 import {
   SwapParams,
   ProviderProps,

@@ -8,7 +8,7 @@ import {
   uriToHttp,
 } from '../src';
 import { MockProvider } from '@ethereum-waffle/provider';
-import { BigNumber } from 'ethers';
+import { BigNumber } from '@ethersproject/bignumber';
 
 // DEFINE CONSTANTS
 
