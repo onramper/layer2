@@ -1,4 +1,14 @@
-import { Config, DAppProvider, useEthers } from '@usedapp/core';
+import {
+  Config,
+  DAppProvider,
+  Goerli,
+  Hardhat,
+  Localhost,
+  Mainnet,
+  Rinkeby,
+  Ropsten,
+  useEthers,
+} from '@usedapp/core';
 import { utils } from 'ethers';
 import React, { createContext, useContext } from 'react';
 import { initializeWallets } from './wallets';
@@ -36,6 +46,7 @@ import { useConnectEnsName, useEnsAvatar } from './hooks';
 export const wallets = initializeWallets(SUPPORTED_CHAINS);
 
 export const config: Config = {
+  networks: [Localhost, Hardhat, Ropsten, Rinkeby, Mainnet, Goerli],
   autoConnect: false,
   notifications: {
     expirationPeriod: 30000,
