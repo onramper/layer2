@@ -47,7 +47,10 @@ export const wallets = initializeWallets(SUPPORTED_CHAINS);
 
 export const config: Config = {
   networks: [Localhost, Hardhat, Ropsten, Rinkeby, Mainnet, Goerli],
-  autoConnect: false,
+  autoConnect: true,
+  readOnlyUrls: {
+    [3]: 'https://eth-ropsten.alchemyapi.io/v2/NIbcpbkDXDzKnORvyQ7GqRBdBVffgP27',
+  },
   notifications: {
     expirationPeriod: 30000,
     checkInterval: 2000,
