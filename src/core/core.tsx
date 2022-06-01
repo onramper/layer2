@@ -42,6 +42,7 @@ import {
 } from './constants';
 import { isNativeToken, isValidRouteDetails, resolveWeth } from './utils';
 import { useConnectEnsName, useEnsAvatar } from './hooks';
+import ethers from 'ethers';
 
 export const wallets = initializeWallets(SUPPORTED_CHAINS);
 
@@ -49,10 +50,10 @@ export const config: Config = {
   networks: [Localhost, Hardhat, Ropsten, Rinkeby, Mainnet, Goerli],
   autoConnect: false,
   readOnlyUrls: {
-    [1]: 'https://eth-mainnet.alchemyapi.io/v2/Gb07nbsh-9IOdoizAI7nL4wcHl_8MYrt',
-    [3]: 'https://eth-ropsten.alchemyapi.io/v2/NIbcpbkDXDzKnORvyQ7GqRBdBVffgP27',
-    [4]: 'https://eth-rinkeby.alchemyapi.io/v2/f6UW9EauWWDD4JL4bHcsY76Cf5wiq-xk',
-    [5]: 'https://eth-goerli.alchemyapi.io/v2/cSDWnBVR4hsqV2kTSJfWYH0Wor7KVvIu',
+    [1]: ethers.getDefaultProvider('mainnet'),
+    [3]: ethers.getDefaultProvider('ropsten'),
+    [4]: ethers.getDefaultProvider('rinkeby'),
+    [5]: ethers.getDefaultProvider('goerli'),
   },
   notifications: {
     expirationPeriod: 30000,
