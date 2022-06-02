@@ -45,14 +45,16 @@ import { useConnectEnsName, useEnsAvatar } from './hooks';
 
 export const wallets = initializeWallets(SUPPORTED_CHAINS);
 
+const infuraProjectId = 'bb5c9b186fcf4139865a530801c160f9';
+
 export const config: Config = {
   networks: [Localhost, Hardhat, Ropsten, Rinkeby, Mainnet, Goerli],
   autoConnect: false,
   readOnlyUrls: {
-    [1]: 'https://eth-mainnet.alchemyapi.io/v2/Gb07nbsh-9IOdoizAI7nL4wcHl_8MYrt',
-    [3]: 'https://eth-ropsten.alchemyapi.io/v2/NIbcpbkDXDzKnORvyQ7GqRBdBVffgP27',
-    [4]: 'https://eth-rinkeby.alchemyapi.io/v2/f6UW9EauWWDD4JL4bHcsY76Cf5wiq-xk',
-    [5]: 'https://eth-goerli.alchemyapi.io/v2/cSDWnBVR4hsqV2kTSJfWYH0Wor7KVvIu',
+    [1]: `https://mainnet.infura.io/v3/${infuraProjectId}`,
+    [3]: `https://ropsten.infura.io/v3/${infuraProjectId}`,
+    [4]: `https://rinkeby.infura.io/v3/${infuraProjectId}`,
+    [5]: `https://goerli.infura.io/v3/${infuraProjectId}`,
   },
   notifications: {
     expirationPeriod: 30000,
