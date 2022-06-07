@@ -53,8 +53,8 @@ export const config: Config = {
   readOnlyUrls: {
     [1]: `https://mainnet.infura.io/v3/${infuraProjectId}`,
     [3]: `https://ropsten.infura.io/v3/${infuraProjectId}`,
-    [4]: `https://rinkeby.infura.io/v3/${infuraProjectId}`,
-    [5]: `https://goerli.infura.io/v3/${infuraProjectId}`,
+    // [4]: `https://rinkeby.infura.io/v3/${infuraProjectId}`,
+    // [5]: `https://goerli.infura.io/v3/${infuraProjectId}`,
   },
   notifications: {
     expirationPeriod: 30000,
