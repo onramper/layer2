@@ -1,24 +1,7 @@
-import {
-  Config,
-  DAppProvider,
-  Goerli,
-  Hardhat,
-  Localhost,
-  Mainnet,
-  Rinkeby,
-  Ropsten,
-  useEthers,
-} from '@usedapp/core';
 import { utils } from 'ethers';
-import React, { createContext, useContext } from 'react';
 import { initializeWallets } from './wallets';
 import { BigNumber } from '@ethersproject/bignumber';
-import {
-  SwapParams,
-  ProviderProps,
-  RouteDetails,
-  QuoteDetails,
-} from './models';
+import { SwapParams, RouteDetails, QuoteDetails } from './models';
 import {
   APIErrorPayload,
   InsufficientFundsError,
@@ -37,30 +20,11 @@ import {
   ROUTER_API,
   DEFAULTS,
   SUPPORTED_CHAINS,
-  chainIdToNetwork,
   NATIVE_INPUT_ONLY,
 } from './constants';
 import { isNativeToken, isValidRouteDetails, resolveWeth } from './utils';
-import { useConnectEnsName, useEnsAvatar } from './hooks';
 
 export const wallets = initializeWallets(SUPPORTED_CHAINS);
-
-const infuraProjectId = 'bb5c9b186fcf4139865a530801c160f9';
-
-export const config: Config = {
-  networks: [Localhost, Hardhat, Ropsten, Rinkeby, Mainnet, Goerli],
-  autoConnect: false,
-  readOnlyUrls: {
-    [1]: `https://mainnet.infura.io/v3/${infuraProjectId}`,
-    [3]: `https://ropsten.infura.io/v3/${infuraProjectId}`,
-    // [4]: `https://rinkeby.infura.io/v3/${infuraProjectId}`,
-    // [5]: `https://goerli.infura.io/v3/${infuraProjectId}`,
-  },
-  notifications: {
-    expirationPeriod: 30000,
-    checkInterval: 2000,
-  },
-};
 
 export async function handleAPIRequest<T>(
   url: string,
@@ -180,22 +144,6 @@ export const getRoute = async (
   return handleAPIRequest<RouteDetails>(url, apiKey, signal);
 };
 
-// return user's address page on Etherscan
-export const blockExplorerAddressLink = (
-  chainID: number,
-  address: string
-): string | undefined => {
-  return chainIdToNetwork[chainID].getExplorerAddressLink(address);
-};
-
-// return user's transaction info page on Etherscan
-export const blockExplorerTransactionLink = (
-  chainID: number,
-  transactionHash: string
-): string | undefined => {
-  return chainIdToNetwork[chainID].getExplorerTransactionLink(transactionHash);
-};
-
 export const getSwapParams = async (
   balance: number,
   tokenIn: TokenInfo,
@@ -238,41 +186,4 @@ export const getSwapParams = async (
     // re-throw errors
     throw error;
   }
-};
-
-interface EnsState {
-  ensName: string | null;
-  ensAvatar: string | null;
-}
-
-export const EnsContext = createContext({} as EnsState);
-
-const EnsProvider = ({ children }: ProviderProps) => {
-  const { account } = useEthers();
-  const ensName = useConnectEnsName();
-  const ensAvatar = useEnsAvatar([ensName, account]);
-  const ensPayload = {
-    ensName: ensName,
-    ensAvatar: ensAvatar,
-  };
-
-  return (
-    <EnsContext.Provider value={ensPayload}>{children}</EnsContext.Provider>
-  );
-};
-
-export const L2Provider = ({ children }: ProviderProps) => {
-  return (
-    <DAppProvider config={config}>
-      <EnsProvider>{children}</EnsProvider>
-    </DAppProvider>
-  );
-};
-
-export const useLayer2 = () => {
-  return useEthers();
-};
-
-export const useEns = () => {
-  return useContext(EnsContext);
 };
