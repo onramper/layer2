@@ -1,12 +1,12 @@
 import {
-  getQuote,
+  getUniswapQuote,
   IncompatibleNetworkError,
   InsufficientFundsError,
   UnsupportedNetworkError,
-  handleAPIRequest,
+  handleUniswapAPIRequest,
   validateRequest,
-  getRoute,
-  DEFAULTS,
+  getUniswapRoute,
+  UNISWAP_DEFAULTS,
 } from '../src';
 import { quoteResponse, routeResponse } from './mocks/responses';
 
@@ -70,13 +70,13 @@ describe('validateRequest', () => {
 
 describe('getQuote', () => {
   it('returns QUOTE response when swap params are missing', async () => {
-    const res = await getQuote(weth, uni, 0.1, false, API_KEY);
+    const res = await getUniswapQuote(weth, uni, 0.1, false, API_KEY);
     expect(res).toEqual(quoteResponse);
   });
 
   it('throws errors if inputs are invalid', async () => {
     await expect(
-      getQuote(
+      getUniswapQuote(
         { ...weth, chainId: 999 },
         { ...uni, chainId: 999 },
         0.1,
@@ -89,28 +89,28 @@ describe('getQuote', () => {
 
 describe('getRoute', () => {
   it('returns ROUTE response when swap params are included', async () => {
-    const res = await getRoute(
+    const res = await getUniswapRoute(
       100,
       weth,
       uni,
       0.02,
       USER_WALLET,
       false,
-      DEFAULTS,
+      UNISWAP_DEFAULTS,
       API_KEY
     );
     expect(res).toEqual(routeResponse);
   });
   it('throws error when inputs are invalid', async () => {
     await expect(
-      getRoute(
+      getUniswapRoute(
         100,
         { ...weth, chainId: 999 },
         { ...uni, chainId: 999 },
         0.02,
         USER_WALLET,
         false,
-        DEFAULTS,
+        UNISWAP_DEFAULTS,
         API_KEY
       )
     ).rejects.toThrowError();
@@ -122,24 +122,27 @@ describe('handleApiErrors', () => {
     const invalidAddress = '0xC54070dA79E7E3e2c95D3a91fe98A42000e65a48';
 
     await expect(
-      handleAPIRequest(`api400?invalidAddress=${invalidAddress}`, API_KEY)
+      handleUniswapAPIRequest(
+        `api400?invalidAddress=${invalidAddress}`,
+        API_KEY
+      )
     ).rejects.toThrow('Invalid arguments');
   });
 
   it('throws InvalidJSONBodyError when API returns 422', async () => {
-    await expect(handleAPIRequest('api422', API_KEY)).rejects.toThrow(
+    await expect(handleUniswapAPIRequest('api422', API_KEY)).rejects.toThrow(
       'Invalid JSON Body'
     );
   });
 
   it('throws InternalError when API returns 500', async () => {
-    await expect(handleAPIRequest('api500', API_KEY)).rejects.toThrow(
+    await expect(handleUniswapAPIRequest('api500', API_KEY)).rejects.toThrow(
       'Unexpected Internal error'
     );
   });
 
   it('throws UnknownError when API returns unrecognized status code', async () => {
-    await expect(handleAPIRequest('api300', API_KEY)).rejects.toThrow(
+    await expect(handleUniswapAPIRequest('api300', API_KEY)).rejects.toThrow(
       'Unknown Error'
     );
   });

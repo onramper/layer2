@@ -11,6 +11,8 @@ import {
 import { TokenInfo } from '../tokens';
 import { getDex } from '../utils';
 
+// ! executing a swap must be called conditionally from widget.
+
 export const getQuote = async (
   gateway: string,
   tokenIn: TokenInfo,

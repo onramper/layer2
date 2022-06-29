@@ -27,7 +27,7 @@ import {
   resolveWeth,
 } from '../../core/utils';
 
-export async function handleAPIRequest<T>(
+export async function handleUniswapAPIRequest<T>(
   url: string,
   apiKey: string,
   signal?: AbortSignal
@@ -111,7 +111,7 @@ export const getUniswapQuote = async (
 
   const url = `${ROUTER_API}/quote?tokenInAddress=${tokenInAddress}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenIn.chainId}&amount=${formattedAmount}&type=${tradeType}`;
 
-  return handleAPIRequest<QuoteDetails>(url, apiKey, signal);
+  return handleUniswapAPIRequest<QuoteDetails>(url, apiKey, signal);
 };
 
 export const getUniswapRoute = async (
@@ -142,7 +142,7 @@ export const getUniswapRoute = async (
   const { slippageTolerance, deadline } = options;
   const url = `${ROUTER_API}/quote?tokenInAddress=${tokenInAddress}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenOut.chainId}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`;
 
-  return handleAPIRequest<RouteDetails>(url, apiKey, signal);
+  return handleUniswapAPIRequest<RouteDetails>(url, apiKey, signal);
 };
 
 export const getUniswapSwapParams = async (

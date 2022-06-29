@@ -1,7 +1,8 @@
-import LIFI, { QuoteRequest, RoutesRequest } from '@lifinance/sdk';
+import LIFI, { QuoteRequest, Route, RoutesRequest } from '@lifinance/sdk';
 import { TokenInfo } from '../../core/tokens';
 import { utils } from 'ethers';
 import { LIFI_DEFAULTS } from '../constants';
+import { Signer } from 'ethers';
 
 // no custom config for now
 const lifi = new LIFI();
@@ -51,4 +52,8 @@ export const getLifiRoute = async (
     options: routeOptions,
   };
   return lifi.getRoutes(request, { signal });
+};
+
+export const executeLifiTransaction = async (signer: Signer, route: Route) => {
+  return lifi.executeRoute(signer, route);
 };
