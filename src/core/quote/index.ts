@@ -1,13 +1,13 @@
 import { Step } from '@lifinance/sdk';
-import { LIFI_DEFAULTS } from 'src/lifi/constants';
-import { getLifiQuote, getLifiRoute } from 'src/lifi/quote';
+import { LIFI_DEFAULTS } from '../../lifi/constants';
+import { getLifiQuote, getLifiRoute } from '../../lifi/quote';
 import {
   UNISWAP_DEFAULTS,
   getUniswapQuote,
   getUniswapRoute,
   QuoteDetails,
   RouteDetails,
-} from 'src/uniswap';
+} from '../../uniswap';
 import { TokenInfo } from '../tokens';
 import { getDex } from '../utils';
 
