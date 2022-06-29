@@ -20,6 +20,7 @@ export const getQuote = async (
   inputAmount: number, // not formatted
   exactOut: boolean = false,
   apiKey: string,
+  destinationAddress?: string,
   signal?: AbortSignal
 ): Promise<QuoteDetails | Step> => {
   if (getDex(gateway) === 'UNISWAP') {
@@ -34,7 +35,13 @@ export const getQuote = async (
   }
 
   if (getDex(gateway) === 'LIFI') {
-    return getLifiQuote(tokenIn, tokenOut, inputAmount, signal);
+    return getLifiQuote(
+      tokenIn,
+      tokenOut,
+      inputAmount,
+      destinationAddress,
+      signal
+    );
   }
 
   throw new Error('Dex not supported');
