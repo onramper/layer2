@@ -17,7 +17,7 @@ import { TokenInfo } from '../../core/tokens';
 import {
   SWAP_ROUTER_ADDRESS,
   ROUTER_API,
-  DEFAULTS,
+  UNISWAP_DEFAULTS,
   SUPPORTED_CHAINS,
   NATIVE_INPUT_ONLY,
 } from '../constants';
@@ -90,7 +90,7 @@ export const validateRequest = (
   }
 };
 
-export const getQuote = async (
+export const getUniswapQuote = async (
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
   inputAmount: number, // not formatted
@@ -114,7 +114,7 @@ export const getQuote = async (
   return handleAPIRequest<QuoteDetails>(url, apiKey, signal);
 };
 
-export const getRoute = async (
+export const getUniswapRoute = async (
   balance: number,
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
@@ -124,7 +124,7 @@ export const getRoute = async (
   options: {
     slippageTolerance: number;
     deadline: number;
-  } = DEFAULTS,
+  } = UNISWAP_DEFAULTS,
   apiKey: string,
   signal?: AbortSignal
 ): Promise<RouteDetails> => {
@@ -145,7 +145,7 @@ export const getRoute = async (
   return handleAPIRequest<RouteDetails>(url, apiKey, signal);
 };
 
-export const getSwapParams = async (
+export const getUniswapSwapParams = async (
   balance: number,
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
@@ -155,12 +155,12 @@ export const getSwapParams = async (
   options: {
     slippageTolerance: number;
     deadline: number;
-  } = DEFAULTS,
+  } = UNISWAP_DEFAULTS,
   apiKey: string,
   signal?: AbortSignal
 ): Promise<SwapParams> => {
   try {
-    const res = await getRoute(
+    const res = await getUniswapRoute(
       balance,
       tokenIn,
       tokenOut,
