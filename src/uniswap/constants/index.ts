@@ -1,4 +1,4 @@
-import { Info } from './models';
+import { Info } from '../models';
 
 export const NATIVE_INPUT_ONLY = true; // for now we only allow ETH => ERC20
 

@@ -1,6 +1,10 @@
-import { MetaMaskProvider, QuoteDetails, RouteDetails } from './models';
+import {
+  MetaMaskProvider,
+  QuoteDetails,
+  RouteDetails,
+} from '../../uniswap/models';
 import { TokenInfo } from '../tokens';
-import { NativeCurrencies } from './constants';
+import { NativeCurrencies } from '../../uniswap/constants';
 import { utils } from 'ethers';
 import { BigNumber } from '@ethersproject/bignumber';
 import { JsonRpcProvider } from '@ethersproject/providers';

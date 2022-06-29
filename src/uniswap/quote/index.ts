@@ -1,7 +1,6 @@
 import { utils } from 'ethers';
-import { initializeWallets } from './wallets';
 import { BigNumber } from '@ethersproject/bignumber';
-import { SwapParams, RouteDetails, QuoteDetails } from './models';
+import { SwapParams, RouteDetails, QuoteDetails } from '../models';
 import {
   APIErrorPayload,
   InsufficientFundsError,
@@ -14,17 +13,19 @@ import {
   NativeInputOnly,
   MinimumSlippageDeadlineError,
 } from '../errors';
-import { TokenInfo } from '../tokens';
+import { TokenInfo } from '../../core/tokens';
 import {
   SWAP_ROUTER_ADDRESS,
   ROUTER_API,
   DEFAULTS,
   SUPPORTED_CHAINS,
   NATIVE_INPUT_ONLY,
-} from './constants';
-import { isNativeToken, isValidRouteDetails, resolveWeth } from './utils';
-
-export const wallets = initializeWallets(SUPPORTED_CHAINS);
+} from '../constants';
+import {
+  isNativeToken,
+  isValidRouteDetails,
+  resolveWeth,
+} from '../../core/utils';
 
 export async function handleAPIRequest<T>(
   url: string,
