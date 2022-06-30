@@ -1,9 +1,14 @@
-import { MetaMaskProvider, QuoteDetails, RouteDetails } from './models';
+import {
+  MetaMaskProvider,
+  QuoteDetails,
+  RouteDetails,
+} from '../../uniswap/models';
 import { TokenInfo } from '../tokens';
-import { NativeCurrencies } from './constants';
+import { NativeCurrencies } from '../../uniswap/constants';
 import { utils } from 'ethers';
 import { BigNumber } from '@ethersproject/bignumber';
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { Dexes } from '../constants';
 
 export const isNativeToken = (token: TokenInfo): boolean => {
   const wethResolved = resolveWeth(token);
@@ -14,6 +19,18 @@ export const isNativeToken = (token: TokenInfo): boolean => {
   if (!nativeForChain) return false;
   if (nativeForChain.symbol === symbol) return true;
   else return false;
+};
+
+// "Moonpay_Uniswap" => "UNISWAP"
+export const getDex = (gateway: string): string | undefined => {
+  const dex = gateway
+    .split('_')
+    .at(-1)
+    ?.toUpperCase();
+  if (dex && dex in Dexes) {
+    return dex;
+  }
+  return undefined;
 };
 
 export const resolveWeth = (token: TokenInfo) => {

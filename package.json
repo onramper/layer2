@@ -42,11 +42,11 @@
   "size-limit": [
     {
       "path": "dist/layer2.cjs.production.min.js",
-      "limit": "1000 KB"
+      "limit": "2000 KB"
     },
     {
       "path": "dist/layer2.esm.js",
-      "limit": "1000 KB"
+      "limit": "2000 KB"
     }
   ],
   "devDependencies": {
@@ -65,7 +65,7 @@
     "whatwg-fetch": "^3.6.2"
   },
   "dependencies": {
-    "@usedapp/core": "^1.0.7",
+    "@lifinance/sdk": "^1.0.0-beta.12",
     "@web3-react/abstract-connector": "^6.0.7",
     "@web3-react/injected-connector": "^6.0.7"
   }

@@ -1,5 +1,5 @@
-import { chainIDToNetworkInfo, SUPPORTED_CHAINS } from '../core/constants';
-import { TokenInfo } from 'src/tokens';
+import { chainIDToNetworkInfo, SUPPORTED_CHAINS } from '../constants';
+import { TokenInfo } from 'src/core/tokens';
 
 // if (inputAmount > balance)
 export class InsufficientFundsError extends Error {

@@ -1,24 +1,6 @@
-import {
-  Config,
-  DAppProvider,
-  Goerli,
-  Hardhat,
-  Localhost,
-  Mainnet,
-  Rinkeby,
-  Ropsten,
-  useEthers,
-} from '@usedapp/core';
 import { utils } from 'ethers';
-import React, { createContext, useContext } from 'react';
-import { initializeWallets } from './wallets';
 import { BigNumber } from '@ethersproject/bignumber';
-import {
-  SwapParams,
-  ProviderProps,
-  RouteDetails,
-  QuoteDetails,
-} from './models';
+import { SwapParams, RouteDetails, QuoteDetails } from '../models';
 import {
   APIErrorPayload,
   InsufficientFundsError,
@@ -31,38 +13,21 @@ import {
   NativeInputOnly,
   MinimumSlippageDeadlineError,
 } from '../errors';
-import { TokenInfo } from '../tokens';
+import { TokenInfo } from '../../core/tokens';
 import {
   SWAP_ROUTER_ADDRESS,
   ROUTER_API,
-  DEFAULTS,
+  UNISWAP_DEFAULTS,
   SUPPORTED_CHAINS,
-  chainIdToNetwork,
   NATIVE_INPUT_ONLY,
-} from './constants';
-import { isNativeToken, isValidRouteDetails, resolveWeth } from './utils';
-import { useConnectEnsName, useEnsAvatar } from './hooks';
+} from '../constants';
+import {
+  isNativeToken,
+  isValidRouteDetails,
+  resolveWeth,
+} from '../../core/utils';
 
-export const wallets = initializeWallets(SUPPORTED_CHAINS);
-
-const infuraProjectId = 'bb5c9b186fcf4139865a530801c160f9';
-
-export const config: Config = {
-  networks: [Localhost, Hardhat, Ropsten, Rinkeby, Mainnet, Goerli],
-  autoConnect: false,
-  readOnlyUrls: {
-    [1]: `https://mainnet.infura.io/v3/${infuraProjectId}`,
-    [3]: `https://ropsten.infura.io/v3/${infuraProjectId}`,
-    // [4]: `https://rinkeby.infura.io/v3/${infuraProjectId}`,
-    // [5]: `https://goerli.infura.io/v3/${infuraProjectId}`,
-  },
-  notifications: {
-    expirationPeriod: 30000,
-    checkInterval: 2000,
-  },
-};
-
-export async function handleAPIRequest<T>(
+export async function handleUniswapAPIRequest<T>(
   url: string,
   apiKey: string,
   signal?: AbortSignal
@@ -125,7 +90,7 @@ export const validateRequest = (
   }
 };
 
-export const getQuote = async (
+export const getUniswapQuote = async (
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
   inputAmount: number, // not formatted
@@ -146,10 +111,10 @@ export const getQuote = async (
 
   const url = `${ROUTER_API}/quote?tokenInAddress=${tokenInAddress}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenIn.chainId}&amount=${formattedAmount}&type=${tradeType}`;
 
-  return handleAPIRequest<QuoteDetails>(url, apiKey, signal);
+  return handleUniswapAPIRequest<QuoteDetails>(url, apiKey, signal);
 };
 
-export const getRoute = async (
+export const getUniswapRoute = async (
   balance: number,
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
@@ -159,7 +124,7 @@ export const getRoute = async (
   options: {
     slippageTolerance: number;
     deadline: number;
-  } = DEFAULTS,
+  } = UNISWAP_DEFAULTS,
   apiKey: string,
   signal?: AbortSignal
 ): Promise<RouteDetails> => {
@@ -177,26 +142,10 @@ export const getRoute = async (
   const { slippageTolerance, deadline } = options;
   const url = `${ROUTER_API}/quote?tokenInAddress=${tokenInAddress}&tokenInChainId=${tokenIn.chainId}&tokenOutAddress=${tokenOut.address}&tokenOutChainId=${tokenOut.chainId}&amount=${formattedAmount}&type=${tradeType}&slippageTolerance=${slippageTolerance}&deadline=${deadline}&recipient=${recipient}`;
 
-  return handleAPIRequest<RouteDetails>(url, apiKey, signal);
+  return handleUniswapAPIRequest<RouteDetails>(url, apiKey, signal);
 };
 
-// return user's address page on Etherscan
-export const blockExplorerAddressLink = (
-  chainID: number,
-  address: string
-): string | undefined => {
-  return chainIdToNetwork[chainID].getExplorerAddressLink(address);
-};
-
-// return user's transaction info page on Etherscan
-export const blockExplorerTransactionLink = (
-  chainID: number,
-  transactionHash: string
-): string | undefined => {
-  return chainIdToNetwork[chainID].getExplorerTransactionLink(transactionHash);
-};
-
-export const getSwapParams = async (
+export const getUniswapSwapParams = async (
   balance: number,
   tokenIn: TokenInfo,
   tokenOut: TokenInfo,
@@ -206,12 +155,12 @@ export const getSwapParams = async (
   options: {
     slippageTolerance: number;
     deadline: number;
-  } = DEFAULTS,
+  } = UNISWAP_DEFAULTS,
   apiKey: string,
   signal?: AbortSignal
 ): Promise<SwapParams> => {
   try {
-    const res = await getRoute(
+    const res = await getUniswapRoute(
       balance,
       tokenIn,
       tokenOut,
@@ -238,41 +187,4 @@ export const getSwapParams = async (
     // re-throw errors
     throw error;
   }
-};
-
-interface EnsState {
-  ensName: string | null;
-  ensAvatar: string | null;
-}
-
-export const EnsContext = createContext({} as EnsState);
-
-const EnsProvider = ({ children }: ProviderProps) => {
-  const { account } = useEthers();
-  const ensName = useConnectEnsName();
-  const ensAvatar = useEnsAvatar([ensName, account]);
-  const ensPayload = {
-    ensName: ensName,
-    ensAvatar: ensAvatar,
-  };
-
-  return (
-    <EnsContext.Provider value={ensPayload}>{children}</EnsContext.Provider>
-  );
-};
-
-export const L2Provider = ({ children }: ProviderProps) => {
-  return (
-    <DAppProvider config={config}>
-      <EnsProvider>{children}</EnsProvider>
-    </DAppProvider>
-  );
-};
-
-export const useLayer2 = () => {
-  return useEthers();
-};
-
-export const useEns = () => {
-  return useContext(EnsContext);
 };
