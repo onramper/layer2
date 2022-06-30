@@ -11,6 +11,7 @@ interface Chain {
   symbol: string;
   decimals: number;
   address: string; // address for native token
+  logoURI: string;
 }
 
 export const lifiChains: Chain[] = [
@@ -20,6 +21,8 @@ export const lifiChains: Chain[] = [
     symbol: 'ETH',
     decimals: 18,
     address: '0x0000000000000000000000000000000000000000', // address for native token
+    logoURI:
+      'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
   },
   {
     chainId: 3,
@@ -27,6 +30,8 @@ export const lifiChains: Chain[] = [
     symbol: 'ROP',
     decimals: 18,
     address: '0x0000000000000000000000000000000000000000', // address for native token
+    logoURI:
+      'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
   },
   {
     chainId: 4,
@@ -34,6 +39,8 @@ export const lifiChains: Chain[] = [
     symbol: 'RNK',
     decimals: 18,
     address: '0x0000000000000000000000000000000000000000', // address for native token
+    logoURI:
+      'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
   },
   {
     chainId: 5,
@@ -41,6 +48,8 @@ export const lifiChains: Chain[] = [
     symbol: 'GRL',
     decimals: 18,
     address: '0x0000000000000000000000000000000000000000', // address for native token
+    logoURI:
+      'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
   },
   {
     chainId: 42,
@@ -48,6 +57,8 @@ export const lifiChains: Chain[] = [
     symbol: 'KOV',
     decimals: 18,
     address: '0x0000000000000000000000000000000000000000', // address for native token
+    logoURI:
+      'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
   },
   {
     chainId: 69,
@@ -55,5 +66,7 @@ export const lifiChains: Chain[] = [
     symbol: 'ETH',
     decimals: 18,
     address: '0x0000000000000000000000000000000000000000', // address for native token
+    logoURI:
+      'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
   },
 ];
